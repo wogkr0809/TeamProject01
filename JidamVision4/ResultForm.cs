@@ -13,7 +13,7 @@ using WeifenLuo.WinFormsUI.Docking;
 using BrightIdeasSoftware;
 
 namespace JidamVision4
-{
+{//
     public partial class ResultForm : DockContent
     {
         //검사 결과를 보여주기 위한 컨트롤 추가
