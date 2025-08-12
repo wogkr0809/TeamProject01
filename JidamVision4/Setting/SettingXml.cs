@@ -22,7 +22,7 @@ namespace JidamVision4.Setting
     6) Setting / SetupForm 에 TabControl을 추가하고, CameraSetting과 PathSetting UserControl을 탭으로 추가
     7) #9_SETUP#1 ~ 2 환경설정 파일을 불러오고 저장하는 기능 구현
     */
-
+    //rrrr
 
     public class SettingXml
     {
