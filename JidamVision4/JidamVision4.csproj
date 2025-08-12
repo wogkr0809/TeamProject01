@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\OpenCvSharp4.runtime.win.4.11.0.20250507\build\net48\OpenCvSharp4.runtime.win.props" Condition="Exists('..\packages\OpenCvSharp4.runtime.win.4.11.0.20250507\build\net48\OpenCvSharp4.runtime.win.props')" />
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{65C6E9AC-8C5F-4388-9B90-505FE228DC7D}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>JidamVision4</RootNamespace>
+    <AssemblyName>JidamVision4</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <OutputPath>bin\x64\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>7.3</LangVersion>
+    <ErrorReport>prompt</ErrorReport>
+    <Prefer32Bit>true</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\ExternalLib\Dll\Log4Net\log4net.dll</HintPath>
+    </Reference>
+    <Reference Include="MessagingLibrary, Version=1.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ExternalLib\Dll\MessagingLibrary\MessagingLibrary.dll</HintPath>
+    </Reference>
+    <Reference Include="MvCameraControl.Net">
+      <HintPath>..\ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
+    </Reference>
+    <Reference Include="ObjectListView">
+      <HintPath>..\ExternalLib\Dll\ObjectListView\ObjectListView.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenCvSharp">
+      <HintPath>..\ExternalLib\Dll\OpenCv\OpenCvSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="OpenCvSharp.Extensions">
+      <HintPath>..\ExternalLib\Dll\OpenCv\OpenCvSharp.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="SaigeVision.Net.Core.V2">
+      <HintPath>..\ExternalLib\Dll\Saige\SaigeVision.Net.Core.V2.dll</HintPath>
+    </Reference>
+    <Reference Include="SaigeVision.Net.V2">
+      <HintPath>..\ExternalLib\Dll\Saige\SaigeVision.Net.V2.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+    <Reference Include="WeifenLuo.WinFormsUI.Docking">
+      <HintPath>..\ExternalLib\Dll\Docking\WeifenLuo.WinFormsUI.Docking.dll</HintPath>
+    </Reference>
+    <Reference Include="WeifenLuo.WinFormsUI.Docking.ThemeVS2015">
+      <HintPath>..\ExternalLib\Dll\Docking\WeifenLuo.WinFormsUI.Docking.ThemeVS2015.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Algorithm\BlobAlgorithm.cs" />
+    <Compile Include="Algorithm\DrawInspectInfo.cs" />
+    <Compile Include="Algorithm\InspAlgorithm.cs" />
+    <Compile Include="Algorithm\MatchAlgorithm.cs" />
+    <Compile Include="CameraForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="CameraForm.Designer.cs">
+      <DependentUpon>CameraForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Core\Define.cs" />
+    <Compile Include="Core\Global.cs" />
+    <Compile Include="Core\ImageSpace.cs" />
+    <Compile Include="Core\InspStage.cs" />
+    <Compile Include="Core\PreviewImage.cs" />
+    <Compile Include="Grab\GrabModel.cs" />
+    <Compile Include="Grab\HikRobotCam.cs" />
+    <Compile Include="Grab\WebCam.cs" />
+    <Compile Include="Inspect\InspectBoard.cs" />
+    <Compile Include="Inspect\InspResult.cs" />
+    <Compile Include="Inspect\InspWorker.cs" />
+    <Compile Include="LogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="LogForm.Designer.cs">
+      <DependentUpon>LogForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="MainForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MainForm.Designer.cs">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ModelTreeForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ModelTreeForm.Designer.cs">
+      <DependentUpon>ModelTreeForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NewModel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NewModel.Designer.cs">
+      <DependentUpon>NewModel.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="PropertiesForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PropertiesForm.Designer.cs">
+      <DependentUpon>PropertiesForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Property\AIModuleProp.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Property\AIModuleProp.Designer.cs">
+      <DependentUpon>AIModuleProp.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Property\BinaryProp.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Property\BinaryProp.Designer.cs">
+      <DependentUpon>BinaryProp.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Property\ImageFilterProp.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Property\ImageFilterProp.Designer.cs">
+      <DependentUpon>ImageFilterProp.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Inspect\SaigeAI.cs" />
+    <Compile Include="Property\MatchInspProp.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Property\MatchInspProp.Designer.cs">
+      <DependentUpon>MatchInspProp.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ResultForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ResultForm.Designer.cs">
+      <DependentUpon>ResultForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="RunForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="RunForm.Designer.cs">
+      <DependentUpon>RunForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Sequence\Communicator.cs" />
+    <Compile Include="Sequence\VisionSequence.cs" />
+    <Compile Include="Setting\CameraSetting.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\CameraSetting.Designer.cs">
+      <DependentUpon>CameraSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\CommunicatorSetting.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\CommunicatorSetting.Designer.cs">
+      <DependentUpon>CommunicatorSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\PathSetting.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\PathSetting.Designer.cs">
+      <DependentUpon>PathSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\SettingXml.cs" />
+    <Compile Include="Setting\SetupForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Setting\SetupForm.Designer.cs">
+      <DependentUpon>SetupForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Teach\DiagramEntity.cs" />
+    <Compile Include="Teach\InspWindow.cs" />
+    <Compile Include="Teach\InspWindowFactory.cs" />
+    <Compile Include="Teach\Model.cs" />
+    <Compile Include="UIControl\ImageViewCtrl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControl\ImageViewCtrl.Designer.cs">
+      <DependentUpon>ImageViewCtrl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControl\MainViewToolbar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControl\MainViewToolbar.Designer.cs">
+      <DependentUpon>MainViewToolbar.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControl\PatternImageEditor.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControl\PatternImageEditor.Designer.cs">
+      <DependentUpon>PatternImageEditor.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UIControl\RangeTrackbar.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControl\RangeTrackbar.Designer.cs">
+      <DependentUpon>RangeTrackbar.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Util\BitmapExtension.cs" />
+    <Compile Include="Util\ImageFileSorter.cs" />
+    <Compile Include="Util\ImageLoader.cs" />
+    <Compile Include="Util\SLogger.cs" />
+    <Compile Include="Util\XmlHelper.cs" />
+    <EmbeddedResource Include="CameraForm.resx">
+      <DependentUpon>CameraForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LogForm.resx">
+      <DependentUpon>LogForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="MainForm.resx">
+      <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ModelTreeForm.resx">
+      <DependentUpon>ModelTreeForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="NewModel.resx">
+      <DependentUpon>NewModel.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="PropertiesForm.resx">
+      <DependentUpon>PropertiesForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="Property\AIModuleProp.resx">
+      <DependentUpon>AIModuleProp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Property\BinaryProp.resx">
+      <DependentUpon>BinaryProp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Property\ImageFilterProp.resx">
+      <DependentUpon>ImageFilterProp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Property\MatchInspProp.resx">
+      <DependentUpon>MatchInspProp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ResultForm.resx">
+      <DependentUpon>ResultForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="RunForm.resx">
+      <DependentUpon>RunForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\CameraSetting.resx">
+      <DependentUpon>CameraSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\CommunicatorSetting.resx">
+      <DependentUpon>CommunicatorSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\PathSetting.resx">
+      <DependentUpon>PathSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\SetupForm.resx">
+      <DependentUpon>SetupForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControl\ImageViewCtrl.resx">
+      <DependentUpon>ImageViewCtrl.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControl\MainViewToolbar.resx">
+      <DependentUpon>MainViewToolbar.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControl\PatternImageEditor.resx">
+      <DependentUpon>PatternImageEditor.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="packages.config" />
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\OpenCvSharp4.runtime.win.4.11.0.20250507\build\net48\OpenCvSharp4.runtime.win.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\OpenCvSharp4.runtime.win.4.11.0.20250507\build\net48\OpenCvSharp4.runtime.win.props'))" />
+  </Target>
+</Project>
