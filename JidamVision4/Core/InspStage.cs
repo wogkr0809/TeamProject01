@@ -857,8 +857,6 @@ namespace JidamVision4.Core
                 cameraForm.SetWorkingState(workingState);
             }
         }
-
-
         #region Disposable
 
         private bool disposed = false; // to detect redundant calls
@@ -900,5 +898,6 @@ namespace JidamVision4.Core
         }
 
         #endregion //Disposable
+        
     }
 }

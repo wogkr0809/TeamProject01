@@ -154,10 +154,10 @@ namespace JidamVision4.UIControl
 
             switch (inspWindowType)
             {
-                case InspWindowType.Base:
+                case InspWindowType.Chip:
                     color = Color.LightBlue;
                     break;
-                case InspWindowType.Body:
+                case InspWindowType.Gird:
                     color = Color.Yellow;
                     break;
                 case InspWindowType.Sub:

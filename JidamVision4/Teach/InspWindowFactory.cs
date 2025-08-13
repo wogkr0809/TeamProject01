@@ -58,11 +58,11 @@ namespace JidamVision4.Teach
         {
             switch (inspWindow.InspWindowType)
             {
-                case InspWindowType.Base:
+                case InspWindowType.Chip:
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
-                case InspWindowType.Body:
+                case InspWindowType.Gird:
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
@@ -87,11 +87,11 @@ namespace JidamVision4.Teach
             prefix = string.Empty;
             switch (windowType)
             {
-                case InspWindowType.Base:
+                case InspWindowType.Chip:
                     name = "Base";
                     prefix = "BAS";
                     break;
-                case InspWindowType.Body:
+                case InspWindowType.Gird:
                     name = "Body";
                     prefix = "BDY";
                     break;

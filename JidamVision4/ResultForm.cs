@@ -1,4 +1,6 @@
-﻿using JidamVision4.Inspect;
+﻿using BrightIdeasSoftware;
+using JidamVision4.Core;
+using JidamVision4.Inspect;
 using JidamVision4.Teach;
 using System;
 using System.Collections.Generic;
@@ -10,7 +12,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
-using BrightIdeasSoftware;
 
 namespace JidamVision4
 {////
@@ -20,6 +21,7 @@ namespace JidamVision4
         private SplitContainer _splitContainer;
         private TreeListView _treeListView;
         private TextBox _txtDetails;
+
 
         public ResultForm()
         {
@@ -155,7 +157,7 @@ namespace JidamVision4
             _treeListView.SetObjects(new List<InspWindow> { inspWindow });
             _treeListView.Expand(inspWindow);
 
-            if(inspWindow.InspResultList.Count > 0)
+            if (inspWindow.InspResultList.Count > 0)
             {
                 InspResult inspResult = inspWindow.InspResultList[0];
                 ShowDedtail(inspResult);
@@ -220,5 +222,22 @@ namespace JidamVision4
                 }
             }
         }
+        public void BindModel(Model model)
+        {
+            if (model == null) return;
+            _treeListView.SetObjects(model.InspWindowList);
+            foreach (var w in model.InspWindowList)
+                _treeListView.Expand(w);
+        }
+        public void RefreshWindow(InspWindow window)
+        {
+            if (window == null) return;
+            _treeListView.RefreshObject(window);
+            _treeListView.Expand(window);
+
+            if (window.InspResultList.Count > 0)
+                ShowDedtail(window.InspResultList[0]);
+        }
+
     }
 }
