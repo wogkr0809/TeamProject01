@@ -57,6 +57,7 @@ namespace JidamVision4
             foreach (InspWindowType windowType in windowTypeList)
                 _contextMenu.Items.Add(new ToolStripMenuItem(windowType.ToString(), null, AddNode_Click) { Tag = windowType });
 
+            tvModelTree.AfterCheck += tvModelTree_AfterCheck; // ← 추가
         }
 
         private void tvModelTree_MouseDown(object sender, MouseEventArgs e)
@@ -97,26 +98,35 @@ namespace JidamVision4
         //현재 모델 전체의 ROI를 트리 모델에 업데이트
         public void UpdateDiagramEntity()
         {
+            // 1) 빌드 중 이벤트 폭주 방지
+            tvModelTree.AfterCheck -= tvModelTree_AfterCheck;
+
             tvModelTree.Nodes.Clear();
             TreeNode rootNode = tvModelTree.Nodes.Add("Root");
 
             Model model = Global.Inst.InspStage.CurModel;
-            List<InspWindow> windowList = model.InspWindowList;
-            if (windowList.Count <= 0)
-                return;
-
-            foreach (InspWindow window in model.InspWindowList)
+            var windowList = model?.InspWindowList ?? new List<InspWindow>();
+            if (windowList.Count > 0)
             {
-                if (window is null)
-                    continue;
+                foreach (InspWindow window in windowList)
+                {
+                    if (window == null) continue;
 
-                string uid = window.UID;
-
-                TreeNode node = new TreeNode(uid);
-                rootNode.Nodes.Add(node);
+                    // 2) 반드시 Tag에 연결(핵심)
+                    string label = $"{window.InspWindowType} [{window.WindowArea.X},{window.WindowArea.Y},{window.WindowArea.Width}x{window.WindowArea.Height}]";
+                    TreeNode node = new TreeNode(label)
+                    {
+                        Tag = window,   // ★ 여기가 핵심
+                        Checked = true  // 3) 기본은 '보임'
+                    };
+                    rootNode.Nodes.Add(node);
+                }
             }
 
             tvModelTree.ExpandAll();
+
+            // 4) 빌드 끝나고 이벤트 다시 연결(핵심)
+            tvModelTree.AfterCheck += tvModelTree_AfterCheck;
         }
 
         private void tvModelTree_AfterCheck(object sender, TreeViewEventArgs e)

@@ -28,34 +28,37 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.imageViewer = new JidamVision4.UIControl.ImageViewCtrl();
             this.mainViewToolbar = new JidamVision4.UIControl.MainViewToolbar();
+            this.imageViewer = new JidamVision4.UIControl.ImageViewCtrl();
             this.SuspendLayout();
+            // 
+            // mainViewToolbar
+            // 
+            this.mainViewToolbar.Dock = System.Windows.Forms.DockStyle.Right;
+            this.mainViewToolbar.Location = new System.Drawing.Point(999, 0);
+            this.mainViewToolbar.Margin = new System.Windows.Forms.Padding(6);
+            this.mainViewToolbar.Name = "mainViewToolbar";
+            this.mainViewToolbar.Size = new System.Drawing.Size(93, 825);
+            this.mainViewToolbar.TabIndex = 2;
             // 
             // imageViewer
             // 
             this.imageViewer.Dock = System.Windows.Forms.DockStyle.Left;
             this.imageViewer.Location = new System.Drawing.Point(0, 0);
-            this.imageViewer.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            this.imageViewer.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.imageViewer.Name = "imageViewer";
-            this.imageViewer.Size = new System.Drawing.Size(471, 450);
+            this.imageViewer.Size = new System.Drawing.Size(673, 825);
             this.imageViewer.TabIndex = 1;
-            // 
-            // mainViewToolbar1
-            // 
-            this.mainViewToolbar.Dock = System.Windows.Forms.DockStyle.Right;
-            this.mainViewToolbar.Location = new System.Drawing.Point(477, 0);
-            this.mainViewToolbar.Name = "mainViewToolbar1";
-            this.mainViewToolbar.Size = new System.Drawing.Size(65, 450);
-            this.mainViewToolbar.TabIndex = 2;
+            this.imageViewer.WorkingState = "";
             // 
             // CameraForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(542, 450);
+            this.ClientSize = new System.Drawing.Size(1092, 825);
             this.Controls.Add(this.mainViewToolbar);
             this.Controls.Add(this.imageViewer);
+            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.Name = "CameraForm";
             this.Text = "CameraForm";
             this.Resize += new System.EventHandler(this.CameraForm_Resize);
