@@ -74,41 +74,41 @@ namespace JidamVision4.Inspect
             Model curMode = Global.Inst.InspStage.CurModel;
             var inspWindowList = curMode.InspWindowList;
 
-            foreach (var inspWindow in inspWindowList)
+            // ★ 비활성(체크 해제/숨김) ROI 제외
+            var active = inspWindowList
+                .Where(w => w != null && w.IgnoreInsp)  // <- TreeView 체크와 동기화된 플래그
+                .ToList();
+
+            // 검사 전 데이터 갱신도 활성만
+            foreach (var w in active)
+                UpdateInspData(w);
+
+            // ★ 활성만 보드에 전달
+            if (active.Count > 0)
+                _inspectBoard.InspectWindowList(active);
+
+            int totalCnt = 0, okCnt = 0, ngCnt = 0;
+            var allRects = new List<DrawInspectInfo>();
+
+            // ★ 결과 집계/표시도 활성만
+            foreach (var w in active)
             {
-                if (inspWindow is null)
-                    continue;
-
-                UpdateInspData(inspWindow);
-            }
-
-            _inspectBoard.InspectWindowList(inspWindowList);
-
-            int totalCnt = 0;
-            int okCnt = 0;
-            int ngCnt = 0;
-
-            var allRects = new List<DrawInspectInfo>(); // ★ 모든 ROI 결과 누적
-
-            foreach (var inspWindow in inspWindowList)
-            {
-                if (inspWindow == null) continue;
                 totalCnt++;
-
-                if (inspWindow.IsDefect()) { isDefect = true; ngCnt++; }
+                if (w.IsDefect()) { isDefect = true; ngCnt++; }
                 else okCnt++;
 
-                // ★ 각 ROI 결과 도형을 수집만 하고, 지금은 그리지 않음
-                var rects = CollectResultRects(inspWindow, InspectType.InspNone);
-                if (rects.Count > 0) allRects.AddRange(rects);     
+                var rects = CollectResultRects(w, InspectType.InspNone);
+                if (rects != null && rects.Count > 0)
+                    allRects.AddRange(rects);
             }
-            // ★ 여기서 한 번만 그립니다.
-            var cameraForm = MainForm.GetDockForm<CameraForm>();
-            if (cameraForm != null && allRects.Count > 0)
-                cameraForm.AddRect(allRects);
 
-            if (totalCnt > 0 && cameraForm != null)
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                // ★ 항상 호출해서 이전 오버레이를 지워줌(비활성 모두면 빈 리스트 전달)
+                cameraForm.AddRect(allRects);
                 cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
+            }
 
             return true;
         }
@@ -119,6 +119,9 @@ namespace JidamVision4.Inspect
         {
             if (inspObj != null)
             {
+                if (!inspObj.IgnoreInsp)
+                    return true;
+
                 if (!UpdateInspData(inspObj))
                     return false;
 

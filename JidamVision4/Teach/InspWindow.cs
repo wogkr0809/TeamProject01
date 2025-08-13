@@ -29,6 +29,8 @@ namespace JidamVision4.Teach
         public string Name { get; set; }
         public string UID { get; set; }
 
+        public bool IgnoreInsp { get; set; } = true; // 검사 무시 플래그, false면 검사 안함
+
         public Rect WindowArea { get; set; }
         public Rect InspArea { get; set; }
         public bool IsTeach { get; set; } = false;

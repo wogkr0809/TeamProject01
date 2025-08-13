@@ -113,7 +113,7 @@ namespace JidamVision4
                     if (window == null) continue;
 
                     // 2) 반드시 Tag에 연결(핵심)
-                    string label = $"{window.InspWindowType} [{window.WindowArea.X},{window.WindowArea.Y},{window.WindowArea.Width}x{window.WindowArea.Height}]";
+                    string label = window.UID;
                     TreeNode node = new TreeNode(label)
                     {
                         Tag = window,   // ★ 여기가 핵심
@@ -141,6 +141,7 @@ namespace JidamVision4
                 var viewer = MainForm.GetDockForm<CameraForm>(); // 예시: 도킹에서 찾기
                 if (viewer != null)
                 {
+                    win.IgnoreInsp = e.Node.Checked;     // ★ 검사대상 on/off
                     viewer.SetWindowVisible(win, e.Node.Checked); // ← 보이기/숨기기 토글
                 }
             }
