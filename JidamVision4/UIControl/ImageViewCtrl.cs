@@ -122,6 +122,9 @@ namespace JidamVision4.UIControl
 
         private readonly object _lock = new object();
 
+        //ROI숨기기 기능을 위한 변수 선언
+        private readonly HashSet<InspWindow> _hiddenWindows = new HashSet<InspWindow>();
+
         public ImageViewCtrl()
         {
             InitializeComponent();
@@ -322,6 +325,8 @@ namespace JidamVision4.UIControl
             _screenSelectedRect = new Rectangle(0, 0, 0, 0);
             foreach (DiagramEntity entity in _diagramEntityList)
             {
+                if (entity.LinkedWindow != null && _hiddenWindows.Contains(entity.LinkedWindow))
+                    continue; // ← 숨김이면 그리지 않음
                 Rectangle screenRect = VirtualToScreen(entity.EntityROI);
                 using (Pen pen = new Pen(entity.EntityColor, 2))
                 {
@@ -605,6 +610,9 @@ namespace JidamVision4.UIControl
                     _selEntity = null;
                     foreach (DiagramEntity entity in _diagramEntityList)
                     {
+                        if (entity.LinkedWindow != null && _hiddenWindows.Contains(entity.LinkedWindow))
+                            continue; // ← 숨김 ROI는 히트테스트 제외
+
                         Rectangle screenRect = VirtualToScreen(entity.EntityROI);
                         if (!screenRect.Contains(e.Location))
                             continue;
@@ -818,6 +826,9 @@ namespace JidamVision4.UIControl
 
                     foreach (DiagramEntity entity in _diagramEntityList)
                     {
+                        if (entity.LinkedWindow != null && _hiddenWindows.Contains(entity.LinkedWindow))
+                            continue;//숨김 ROI는 선택 못함
+
                         if (selectionVirtual.IntersectsWith(entity.EntityROI))
                         {
                             _multiSelectedEntities.Add(entity);
@@ -1234,6 +1245,25 @@ namespace JidamVision4.UIControl
             }
         }
 
+        //숨기기
+        public void SetWindowVisible(InspWindow window, bool visible)
+        {
+            if (window == null) return;
+
+            if (visible) _hiddenWindows.Remove(window);
+            else _hiddenWindows.Add(window);
+
+            // 현재 선택된 ROI가 숨김이면 선택 해제
+            if (!visible && _selEntity != null && _selEntity.LinkedWindow == window)
+            {
+                _multiSelectedEntities.RemoveAll(d => d.LinkedWindow == window);
+                _selEntity = null;
+                // 선택 해제 이벤트(필요 시)
+                DiagramEntityEvent?.Invoke(this, new DiagramEntityEventArgs(EntityActionType.Select, null));
+            }
+
+            Invalidate();
+        }
 
     }
 

@@ -26,6 +26,11 @@ namespace JidamVision4
         //_currentImageChannel 변수 모두 찾아서, 관련 코드 수정할것
         eImageChannel _currentImageChannel = eImageChannel.Gray;
 
+        public ImageViewCtrl Viewer => imageViewer; // 디자이너 이름이 imageViewer라고 하셨음
+
+        public void SetWindowVisible(InspWindow win, bool visible)
+            => imageViewer.SetWindowVisible(win, visible); //추가
+
         public CameraForm()
         {
             InitializeComponent();

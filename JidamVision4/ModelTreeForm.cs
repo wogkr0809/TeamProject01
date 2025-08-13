@@ -1,5 +1,8 @@
-﻿using JidamVision4.Core;
+﻿using JidamVision4.Algorithm;
+using JidamVision4.Core;
 using JidamVision4.Teach;
+using JidamVision4.UIControl;
+using JidamVision4.Util;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace JidamVision4
 {
@@ -117,7 +121,21 @@ namespace JidamVision4
 
         private void tvModelTree_AfterCheck(object sender, TreeViewEventArgs e)
         {
+            // 재귀 방어: 자식 일괄 체크 같은 로직이 있으면 일시 분리 권장
+            tvModelTree.AfterCheck -= tvModelTree_AfterCheck;
 
+            var win = e.Node.Tag as InspWindow;
+            if (win != null)
+            {
+                // ImageViewCtrl 인스턴스 가져오기 (폼/싱글톤/DI 등 프로젝트 방식대로)
+                var viewer = MainForm.GetDockForm<CameraForm>(); // 예시: 도킹에서 찾기
+                if (viewer != null)
+                {
+                    viewer.SetWindowVisible(win, e.Node.Checked); // ← 보이기/숨기기 토글
+                }
+            }
+
+            tvModelTree.AfterCheck += tvModelTree_AfterCheck;
         }
     }
 }
