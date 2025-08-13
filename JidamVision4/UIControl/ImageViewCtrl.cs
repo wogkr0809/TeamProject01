@@ -160,7 +160,7 @@ namespace JidamVision4.UIControl
                 case InspWindowType.Chip:
                     color = Color.LightBlue;
                     break;
-                case InspWindowType.Gird:
+                case InspWindowType.lead:
                     color = Color.Yellow;
                     break;
                 case InspWindowType.Sub:

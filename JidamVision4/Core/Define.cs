@@ -22,7 +22,7 @@ namespace JidamVision4.Core
     {
         None = 0,
         Chip,
-        Gird,
+        lead,
         Sub,
         ID
     }
