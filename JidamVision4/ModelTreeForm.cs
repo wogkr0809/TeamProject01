@@ -39,6 +39,8 @@ namespace JidamVision4
         {
             InitializeComponent();
 
+            tvModelTree.CheckBoxes = true; //트리 노드에 체크박스 표시
+
             //초기 트리 노트의 기본값은 "Root"
             tvModelTree.Nodes.Add("Root");
 
@@ -46,7 +48,7 @@ namespace JidamVision4
             _contextMenu = new ContextMenuStrip();
 
             List<InspWindowType> windowTypeList;
-            windowTypeList = new List<InspWindowType> { InspWindowType.Base, InspWindowType.Body, InspWindowType.Sub};
+            windowTypeList = new List<InspWindowType> { InspWindowType.Base, InspWindowType.Body, InspWindowType.Sub, InspWindowType.ID};
             
             foreach (InspWindowType windowType in windowTypeList)
                 _contextMenu.Items.Add(new ToolStripMenuItem(windowType.ToString(), null, AddNode_Click) { Tag = windowType });
@@ -111,6 +113,11 @@ namespace JidamVision4
             }
 
             tvModelTree.ExpandAll();
+        }
+
+        private void tvModelTree_AfterCheck(object sender, TreeViewEventArgs e)
+        {
+
         }
     }
 }
