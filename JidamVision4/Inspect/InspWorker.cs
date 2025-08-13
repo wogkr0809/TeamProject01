@@ -72,7 +72,8 @@ namespace JidamVision4.Inspect
         {
             isDefect = false;
             Model curMode = Global.Inst.InspStage.CurModel;
-            List<InspWindow> inspWindowList = curMode.InspWindowList;
+            var inspWindowList = curMode.InspWindowList;
+
             foreach (var inspWindow in inspWindowList)
             {
                 if (inspWindow is null)
@@ -86,34 +87,28 @@ namespace JidamVision4.Inspect
             int totalCnt = 0;
             int okCnt = 0;
             int ngCnt = 0;
+
+            var allRects = new List<DrawInspectInfo>(); // ★ 모든 ROI 결과 누적
+
             foreach (var inspWindow in inspWindowList)
             {
+                if (inspWindow == null) continue;
                 totalCnt++;
 
-                if (inspWindow.IsDefect())
-                {
-                    if (!isDefect)
-                        isDefect = true;
+                if (inspWindow.IsDefect()) { isDefect = true; ngCnt++; }
+                else okCnt++;
 
-                    ngCnt++;
-                }
-                else
-                {
-                    okCnt++;
-                }
-
-                DisplayResult(inspWindow, InspectType.InspNone);
+                // ★ 각 ROI 결과 도형을 수집만 하고, 지금은 그리지 않음
+                var rects = CollectResultRects(inspWindow, InspectType.InspNone);
+                if (rects.Count > 0) allRects.AddRange(rects);     
             }
+            // ★ 여기서 한 번만 그립니다.
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null && allRects.Count > 0)
+                cameraForm.AddRect(allRects);
 
-            if (totalCnt > 0)
-            {
-                //찾은 위치를 이미지상에서 표시
-                var cameraForm = MainForm.GetDockForm<CameraForm>();
-                if (cameraForm != null)
-                {
-                    cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
-                }
-            }
+            if (totalCnt > 0 && cameraForm != null)
+                cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
 
             return true;
         }
@@ -209,6 +204,21 @@ namespace JidamVision4.Inspect
             }
 
             return true;
+        }
+        private List<DrawInspectInfo> CollectResultRects(InspWindow inspObj, InspectType inspType)
+        {
+            var totalArea = new List<DrawInspectInfo>();
+            if (inspObj == null) return totalArea;
+                
+            foreach (var algorithm in inspObj.AlgorithmList)
+            {
+                if (algorithm.InspectType != inspType && inspType != InspectType.InspNone)
+                    continue;
+
+                if (algorithm.GetResultRect(out var resultArea) > 0 && resultArea != null)
+                    totalArea.AddRange(resultArea);
+            }
+            return totalArea;
         }
     }
 }

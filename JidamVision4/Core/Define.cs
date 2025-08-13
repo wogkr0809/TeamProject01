@@ -21,8 +21,8 @@ namespace JidamVision4.Core
     public enum InspWindowType
     {
         None = 0,
-        Base,
-        Body,
+        Chip,
+        Gird,
         Sub,
         ID
     }

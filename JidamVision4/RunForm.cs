@@ -30,21 +30,21 @@ namespace JidamVision4
         //#8_INSPECT_BINARY#20 검사 시작 버튼을 디자인창에서 만들고, 검사 함수 호출
         private void btnStart_Click(object sender, EventArgs e)
         {
-            //#15_INSP_WORKER#10 카메라 타입에 따라 자동 검사 모드 설정
-
             string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}";
             Global.Inst.InspStage.InspectReady("LOT_NUMBER", serialID);
 
             if (SettingXml.Inst.CamType == Grab.CameraType.None)
             {
                 bool cycleMode = SettingXml.Inst.CycleMode;
-                Global.Inst.InspStage.CycleInspect(cycleMode);
+                Global.Inst.InspStage.CycleInspect(cycleMode); // 내부적으로 OneCycle() -> RunInspect() 호출
             }
             else
             {
                 Global.Inst.InspStage.StartAutoRun();
             }
         }
+        
+
 
         private void btnStop_Click(object sender, EventArgs e)
         {
