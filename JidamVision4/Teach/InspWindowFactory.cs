@@ -62,7 +62,7 @@ namespace JidamVision4.Teach
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
-                case InspWindowType.Gird:
+                case InspWindowType.lead:
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
@@ -88,16 +88,16 @@ namespace JidamVision4.Teach
             switch (windowType)
             {
                 case InspWindowType.Chip:
-                    name = "Base";
-                    prefix = "BAS";
+                    name = "Chip";
+                    prefix = "Chip";
                     break;
-                case InspWindowType.Gird:
-                    name = "Body";
-                    prefix = "BDY";
+                case InspWindowType.lead:
+                    name = "Lead";
+                    prefix = "Lead";
                     break;
                 case InspWindowType.Sub:
                     name = "Sub";
-                    prefix = "SUB";
+                    prefix = "Sub";
                     break;
                 case InspWindowType.ID:
                     name = "ID";
