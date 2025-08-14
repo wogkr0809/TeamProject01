@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -124,7 +125,12 @@ namespace JidamVision4
                     //#13_SET_IMAGE_BUFFER#2 이미지에 맞게 버퍼를 먼저 설정하도록 변경
                     string filePath = openFileDialog.FileName;
                     Global.Inst.InspStage.SetImageBuffer(filePath);
-                    Global.Inst.InspStage.CurModel.InspectImagePath = filePath;
+
+                    string modelDir = Path.GetDirectoryName(Global.Inst.InspStage.CurModel.ModelPath);
+
+                    string newPath = filePath.Replace(modelDir, "");//경로를 모델경로를 ""으로 바꿔서 모델경로를 상대경로바꾼다.
+
+                    Global.Inst.InspStage.CurModel.InspectImagePath = newPath;
                 }
             }
         }

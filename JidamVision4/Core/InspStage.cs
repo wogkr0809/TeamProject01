@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 
+
 namespace JidamVision4.Core
 {
     /*
@@ -57,7 +58,7 @@ namespace JidamVision4.Core
 
         //#7_BINARY_PREVIEW#1 이진화 프리뷰에 필요한 변수 선언
         private PreviewImage _previewImage = null;
-        
+
         //#10_INSPWINDOW#8 모델과 선택된 ROI 윈도우 변수 선언
         private Model _model = null;
 
@@ -201,7 +202,7 @@ namespace JidamVision4.Core
             //#18_IMAGE_CHANNEL#7 카메라 칼라 여부에 따라, 기본 채널 설정
             eImageChannel imageChannel = (pixelBpp == 24) ? eImageChannel.Color : eImageChannel.Gray;
             SetImageChannel(imageChannel);
-            
+
             //_grabManager.SetExposureTime(25000);
         }
 
@@ -634,22 +635,20 @@ namespace JidamVision4.Core
 
             // 이미지 경로 해석
             string inspImagePath = _model.InspectImagePath;
-            string modelDir = Path.GetDirectoryName(filePath);
-
-            // 상대경로면 모델 폴더 기준으로 변환
-            if (!string.IsNullOrEmpty(inspImagePath) && !Path.IsPathRooted(inspImagePath))
-                inspImagePath = Path.Combine(modelDir, inspImagePath);
-
-            // 폴백: 모델폴더\Images\RoiImage.png
-            if (string.IsNullOrEmpty(inspImagePath) || !File.Exists(inspImagePath))
+            if (!File.Exists(inspImagePath))
             {
-                string fallback = Path.Combine(modelDir, "Images", Define.ROI_IMAGE_NAME);
-                if (File.Exists(fallback))
-                    inspImagePath = fallback;
+                string modelDir = Path.GetDirectoryName(filePath);
+                //string temp = Path.Combine(modelDir, inspImagePath);
+                inspImagePath = modelDir + inspImagePath;
             }
+
 
             if (!string.IsNullOrEmpty(inspImagePath) && File.Exists(inspImagePath))
                 SetImageBuffer(inspImagePath);
+            if (File.Exists(inspImagePath))
+                SetImageBuffer(inspImagePath);   // 이미지는 띄워줌 :contentReference[oaicite:6]{index=6}
+
+            EnsureMatchTemplates();               // ★ 여기 한 줄 추가
 
             UpdateDiagramEntity();
             return true;
@@ -706,7 +705,7 @@ namespace JidamVision4.Core
             }
 
             // 4) XML에는 상대경로로 기록 → 폴더를 옮겨도 경로가 안 깨짐
-            CurModel.InspectImagePath = Path.Combine("Images", Define.ROI_IMAGE_NAME);
+            //CurModel.InspectImagePath = "";// Path.Combine("Images", Define.ROI_IMAGE_NAME);
 
             // 5) 실제 모델 저장
             if (string.IsNullOrEmpty(filePath))
@@ -714,7 +713,7 @@ namespace JidamVision4.Core
             else
                 CurModel.SaveAs(filePath);
         }
-        
+
         private bool LastestModelOpen()
         {
             if (_lastestModelOpen)
@@ -745,6 +744,12 @@ namespace JidamVision4.Core
                 if (inspImagePath == "")
                     return;
 
+                if (!File.Exists(inspImagePath))
+                {
+                    string modelDir = Path.GetDirectoryName(_model.ModelPath);
+                    inspImagePath = modelDir + inspImagePath;
+                }
+
                 string inspImageDir = Path.GetDirectoryName(inspImagePath);
                 if (!Directory.Exists(inspImageDir))
                     return;
@@ -773,6 +778,7 @@ namespace JidamVision4.Core
             }
 
             ResetDisplay();
+            UpdateDiagramEntity();   // ★ ROI(티칭창) 오버레이 다시 올리기
 
             bool isDefect;
             if (!_inspWorker.RunInspect(out isDefect))
@@ -846,7 +852,7 @@ namespace JidamVision4.Core
                             errMsg = string.Format("Failed to inspect");
                             SLogger.Write(errMsg, SLogger.LogType.Error);
                         }
-                        
+
                         //#WCF_FSM#6 비젼 -> 제어에 검사 완료 및 결과 전송
                         VisionSequence.Inst.VisionCommand(Vision2Mmi.InspDone, isDefect);
                     }
@@ -957,6 +963,17 @@ namespace JidamVision4.Core
         }
 
         #endregion //Disposable
-        
+        private void EnsureMatchTemplates()
+        {
+            if (_model == null) return;
+            foreach (var w in _model.InspWindowList)
+            {
+                var match = (JidamVision4.Algorithm.MatchAlgorithm)
+                            w.FindInspAlgorithm(JidamVision4.Core.InspectType.InspMatch);
+                // 템플릿이 없으면 저장된 윈도우 이미지 기반으로 학습
+                if (match != null && match.GetTemplateImages().Count == 0)
+                    w.PatternLearn();  // 속성창을 안 열어도 학습 실행
+            }
+        }
     }
 }
