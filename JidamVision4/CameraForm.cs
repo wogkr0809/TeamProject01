@@ -262,6 +262,16 @@ namespace JidamVision4
             this.FormClosed -= CameraForm_FormClosed;
         }
 
-        
+        public void SwitchToCurrentModel()
+        {
+            imageViewer.ResetEntity();             // ROI/선택/오버레이 리스트 클리어 일부
+            imageViewer.ClearVisibility();         // 숨김(체크 해제) 목록 클리어
+            imageViewer.ClearOverlaysAndCounts();  // 검사 오버레이/카운트/상태 텍스트 클리어
+
+            MainForm.GetDockForm<ModelTreeForm>().UpdateDiagramEntity(); // 모델 트리 갱신
+            MainForm.GetDockForm<ResultForm>().ClearResults();
+        }
+
+
     }
 }

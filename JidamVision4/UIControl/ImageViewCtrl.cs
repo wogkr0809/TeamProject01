@@ -1411,6 +1411,22 @@ namespace JidamVision4.UIControl
             Invalidate();
         }
 
+        public void ClearVisibility()
+        {
+            _hiddenWindows.Clear();
+        }
+
+        public void ClearOverlaysAndCounts()
+        {
+            lock (_lock)
+            {
+                _rectInfos.Clear();
+            }
+            _inspectResultCount = new InspectResultCount(); // 0,0,0
+            WorkingState = "";
+            Invalidate();
+        }
+
     }
 
     //#10_INSPWINDOW#22 ImageViewCtrl에서 사용하는 이벤트 타입 정의

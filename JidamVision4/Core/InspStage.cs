@@ -1,25 +1,23 @@
 ﻿using JidamVision4.Algorithm;
 using JidamVision4.Grab;
-using JidamVision4.Inspect;
-using JidamVision4.Sequence;
-using JidamVision4.Setting;
 using JidamVision4.Teach;
-using JidamVision4.Util;
-using Microsoft.Win32;
+using JidamVision4.Setting;
 using OpenCvSharp;
 using OpenCvSharp.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+using System.Runtime.InteropServices;
+using JidamVision4.Inspect;
+using JidamVision4.Util;
 using System.Windows.Forms;
-
+using Microsoft.Win32;
+using JidamVision4.Sequence;
 
 namespace JidamVision4.Core
 {
@@ -111,6 +109,7 @@ namespace JidamVision4.Core
         public Model CurModel
         {
             get => _model;
+            set => _model = value; //쓰기도 가능
         }
 
         //#8_LIVE#1 LIVE 모드 프로퍼티
@@ -626,32 +625,26 @@ namespace JidamVision4.Core
             SLogger.Write($"모델 로딩:{filePath}");
 
             _model = _model.Load(filePath);
+
+            
+
             if (_model is null)
             {
                 SLogger.Write($"모델 로딩 실패:{filePath}");
                 return false;
             }
 
-            // 이미지 경로 해석
             string inspImagePath = _model.InspectImagePath;
-            string modelDir = Path.GetDirectoryName(filePath);
-
-            // 상대경로면 모델 폴더 기준으로 변환
-            if (!string.IsNullOrEmpty(inspImagePath) && !Path.IsPathRooted(inspImagePath))
-                inspImagePath = Path.Combine(modelDir, inspImagePath);
-
-            // 폴백: 모델폴더\Images\RoiImage.png
-            if (string.IsNullOrEmpty(inspImagePath) || !File.Exists(inspImagePath))
+            if (File.Exists(inspImagePath))
             {
-                string fallback = Path.Combine(modelDir, "Images", Define.ROI_IMAGE_NAME);
-                if (File.Exists(fallback))
-                    inspImagePath = fallback;
+                Global.Inst.InspStage.SetImageBuffer(inspImagePath);
             }
 
-            if (!string.IsNullOrEmpty(inspImagePath) && File.Exists(inspImagePath))
-                SetImageBuffer(inspImagePath);
-
             UpdateDiagramEntity();
+
+            //#16_LAST_MODELOPEN#3 마지막 저장 모델 경로를 레지스트리에 저장
+            _regKey.SetValue("LastestModelPath", filePath);
+
             return true;
         }
 
@@ -659,60 +652,11 @@ namespace JidamVision4.Core
         {
             SLogger.Write($"모델 저장:{filePath}");
 
-            // 1) 최종 저장될 모델 XML 경로
-            string targetModelPath = string.IsNullOrEmpty(filePath) ? CurModel.ModelPath : filePath;
-            if (string.IsNullOrEmpty(targetModelPath))
-            {
-                // 아직 경로가 정해지지 않은 새 모델이라면, 일단 현재 저장만 수행
-                CurModel.Save();
-                targetModelPath = CurModel.ModelPath;
-                if (string.IsNullOrEmpty(targetModelPath))
-                    return; // 저장 경로가 없다면 더 진행 불가
-                return;
-            }
-
-            // 2) 모델 폴더/이미지 폴더 준비
-            string modelDir = Path.GetDirectoryName(targetModelPath);
-            string imgDir = Path.Combine(modelDir, "Images");
-            Directory.CreateDirectory(imgDir);
-
-            string dstImg = Path.Combine(imgDir, Define.ROI_IMAGE_NAME); // RoiImage.png
-
-            // 3) 현재 화면의 이미지를 모델 폴더에 저장 (없으면 기존 경로에서 복사)
-            try
-            {
-                var bmp = GetBitmap();  // 현재 표시 중인 이미지
-                if (bmp != null)
-                {
-                    using (var copy = (Bitmap)bmp.Clone()) // 내부 버퍼 영향 없게 복제본 저장
-                        copy.Save(dstImg, ImageFormat.Png);
-                }
-                else
-                {
-                    string src = CurModel.InspectImagePath;
-                    if (!string.IsNullOrEmpty(src))
-                    {
-                        if (!Path.IsPathRooted(src))
-                            src = Path.Combine(modelDir, src); // 상대경로 보정
-                        if (File.Exists(src))
-                            File.Copy(src, dstImg, true);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                SLogger.Write($"이미지 저장 실패: {ex.Message}", SLogger.LogType.Error);
-                // 실패해도 모델 저장은 진행
-            }
-
-            // 4) XML에는 상대경로로 기록 → 폴더를 옮겨도 경로가 안 깨짐
-            CurModel.InspectImagePath = Path.Combine("Images", Define.ROI_IMAGE_NAME);
-
-            // 5) 실제 모델 저장
+            //입력 경로가 없으면 현재 모델 저장
             if (string.IsNullOrEmpty(filePath))
-                CurModel.Save();
+                Global.Inst.InspStage.CurModel.Save();
             else
-                CurModel.SaveAs(filePath);
+                Global.Inst.InspStage.CurModel.SaveAs(filePath);
         }
         
         private bool LastestModelOpen()

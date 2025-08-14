@@ -71,6 +71,7 @@ namespace JidamVision4.Teach
             ModelInfo = modelInfo;
         }
 
+
         //#12_MODEL SAVE#2 모델 파일 Load,Save,SaveAs
         //모델 로딩함수
         public Model Load(string path)
@@ -78,6 +79,8 @@ namespace JidamVision4.Teach
             Model model = XmlHelper.LoadXml<Model>(path);
             if (model == null)
                 return null;
+
+            ModelPath = path;
 
             foreach (var window in model.InspWindowList)
             {
