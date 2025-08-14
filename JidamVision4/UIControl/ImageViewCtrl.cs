@@ -1,16 +1,18 @@
-﻿using System;
+﻿using JidamVision4.Algorithm;
+using JidamVision4.Core;
+using JidamVision4.Setting;
+using JidamVision4.Teach;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Data;
+using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Drawing.Drawing2D;
-using JidamVision4.Algorithm;
-using JidamVision4.Core;
-using JidamVision4.Teach;
+
 
 namespace JidamVision4.UIControl
 {
@@ -124,6 +126,64 @@ namespace JidamVision4.UIControl
 
         //ROI숨기기 기능을 위한 변수 선언
         private readonly HashSet<InspWindow> _hiddenWindows = new HashSet<InspWindow>();
+
+        //보드 길이 측정 #2
+        public enum ToolMode { None, Measure }
+
+        //보드 길이 측정 #3
+        private ToolMode _toolMode = ToolMode.None;
+        private Point? _measureP1 = null;   // 첫 클릭
+        private Point? _measureP2 = null;   // 두 번째 클릭/드래그
+
+        //보드 길이 측정 #4
+        public struct MeasurementResult
+        {
+            public Point P1, P2;
+            public double DistancePx;
+            public double DistanceMM;
+        }
+        private MeasurementResult _lastMeasurement;
+
+        // (외부 접근용) 현재 로드 비트맵
+        //보드 길이 측정 #5
+        public Bitmap CurrentBitmap { get { return _bitmapImage; } }
+
+        //보드 길이 측정 #6
+        public void SetToolMode(ToolMode mode)
+        {
+            _toolMode = mode;
+            _measureP1 = _measureP2 = null;
+            Invalidate();
+        }
+
+        //보드 길이 측정 #7
+        public MeasurementResult GetLastMeasurement()
+        {
+            return _lastMeasurement;
+        }
+
+        //보드 길이 측정 #8
+        private void CommitMeasurement()
+        {
+            if (_measureP1 == null || _measureP2 == null) return;
+
+            var p1 = _measureP1.Value;
+            var p2 = _measureP2.Value;
+
+            double dx = p2.X - p1.X, dy = p2.Y - p1.Y;
+            double distPx = Math.Sqrt(dx * dx + dy * dy);
+
+            double ppm = SettingXml.Inst.PixelPerMM; // px/mm
+            double distMM = (ppm > 0) ? distPx / ppm : 0.0;
+
+            _lastMeasurement = new MeasurementResult
+            {
+                P1 = p1,
+                P2 = p2,
+                DistancePx = distPx,
+                DistanceMM = distMM
+            };
+        }
 
         public ImageViewCtrl()
         {
@@ -312,6 +372,41 @@ namespace JidamVision4.UIControl
 
                     //#8_INSPECT_BINARY#16 _rectInfos 그리기
                     DrawDiagram(g);
+
+                    //보드 길이 측정 #13
+                    if (_toolMode == ToolMode.Measure && _measureP1 != null && _measureP2 != null)
+                    {
+                        var p1 = _measureP1.Value;
+                        var p2 = _measureP2.Value;
+
+                        using (var pen = new Pen(Color.Lime, 2))
+                        using (var font = new Font("Segoe UI", 9f, FontStyle.Bold))
+                        using (var bg = new SolidBrush(Color.FromArgb(160, 0, 0, 0)))
+                        using (var fg = new SolidBrush(Color.White))
+                        {
+                            // 라인 + 포인트
+                            g.DrawLine(pen, p1, p2);
+                            g.FillEllipse(Brushes.Yellow, p1.X - 3, p1.Y - 3, 6, 6);
+                            g.FillEllipse(Brushes.Yellow, p2.X - 3, p2.Y - 3, 6, 6);
+
+                            // 길이 표시
+                            double dx = p2.X - p1.X, dy = p2.Y - p1.Y;
+                            double distPx = Math.Sqrt(dx * dx + dy * dy);
+                            double ppm = SettingXml.Inst.PixelPerMM;
+                            double distMM = (ppm > 0) ? distPx / ppm : 0.0;
+
+                            string label = string.Format("{0:F1} px / {1:F2} mm", distPx, distMM);
+                            SizeF sz = g.MeasureString(label, font);
+                            Point mid = new Point((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
+                            RectangleF rect = new RectangleF(mid.X - sz.Width / 2 - 4,
+                                                              mid.Y - sz.Height - 8,
+                                                              sz.Width + 8, sz.Height + 4);
+
+                            g.FillRectangle(bg, rect);
+                            g.DrawString(label, font, fg, rect.Location);
+                        }
+                    }
+
 
                     // 캔버스를 UserControl 화면에 표시
                     e.Graphics.DrawImage(Canvas, 0, 0);
@@ -565,6 +660,56 @@ namespace JidamVision4.UIControl
                 }
             }
         }
+
+        //보드 길이 측정 #9
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+
+            if (_toolMode == ToolMode.Measure)
+            {
+                if (_measureP1 == null)           // 1st click
+                {
+                    _measureP1 = e.Location;
+                    _measureP2 = e.Location;
+                }
+                else                               // 2nd click → Commit (잠금은 부록 A)
+                {
+                    _measureP2 = e.Location;
+                    CommitMeasurement();
+                }
+                Invalidate();
+                return;
+            }
+            base.OnMouseDown(e);
+        }
+
+        //보드 길이 측정 #10
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            if (_toolMode == ToolMode.Measure)
+            {
+                if (_measureP1 != null)
+                {
+                    _measureP2 = e.Location; // 러버밴드
+                    Invalidate();
+                }
+                return;
+            }
+            base.OnMouseMove(e);
+        }
+
+        //보드 길이 측정 #11
+        protected override void OnMouseDoubleClick(MouseEventArgs e)
+        {
+            if (_toolMode == ToolMode.Measure)
+            {
+                _measureP1 = _measureP2 = null; // 초기화
+                Invalidate();
+                return;
+            }
+            base.OnMouseDoubleClick(e);
+        }
+
 
         //#10_INSPWINDOW#19 ROI 편집을 위한 마우스 이벤트
         private void ImageViewCtrl_MouseDown(object sender, MouseEventArgs e)
@@ -982,6 +1127,7 @@ namespace JidamVision4.UIControl
             // 다시 그리기 요청
             Invalidate();
         }
+
 
         //휠에 의해, Zoom 확대/축소 값 계산
         private void ZoomMove(float zoom, Point zoomOrigin)

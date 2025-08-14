@@ -12,6 +12,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
+using OpenCvSharp;
+using OpenCvSharp.Extensions;    
+using JidamVision4.Algorithm;
+using JidamVision4.UIControl;
+
 
 namespace JidamVision4
 {
@@ -219,6 +224,26 @@ namespace JidamVision4
             // 현재 체크 상태 확인
             bool isChecked = cycleModeMenuItem.Checked;
             SettingXml.Inst.CycleMode = isChecked;
+        }
+
+        private void miMeasureDistance_Click(object sender, EventArgs e)
+        {
+            bool on = miMeasureDistance.Checked;
+
+            var cam = MainForm.GetDockForm<CameraForm>();
+            if (cam == null) { MessageBox.Show("Camera window not found."); miMeasureDistance.Checked = false; return; }
+
+            var view = cam.GetImageView();
+            if (view == null) { MessageBox.Show("Image view not found."); miMeasureDistance.Checked = false; return; }
+
+            view.SetToolMode(on ? ImageViewCtrl.ToolMode.Measure : ImageViewCtrl.ToolMode.None);
+            view.WorkingState = on ? "MEASURE" : "";
+            view.Invalidate();
+        }
+
+        private void miMeasureBoardSize_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

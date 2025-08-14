@@ -110,5 +110,8 @@ namespace JidamVision4.Setting
         //#19_VISION_SEQUENCE#1 통신타입, IP 설정
         public CommunicatorType CommType { get; set; }
         public string CommIP { get; set; } = "127.0.0.1";
+
+        //보드 길이 측정 #1
+        public double PixelPerMM { get; set; } = 10.0; // px/mm 기본값
     }
 }

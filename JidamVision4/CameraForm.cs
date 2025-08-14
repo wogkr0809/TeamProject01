@@ -22,6 +22,12 @@ namespace JidamVision4
     //public partial class CameraForm: Form
     public partial class CameraForm : DockContent
     {
+        //보드 길이 측정 #16
+        public JidamVision4.UIControl.ImageViewCtrl GetImageView()
+        {
+            return imageViewer; // ← 실제 컨트롤명으로 변경
+        }
+
         //#18_IMAGE_CHANNEL#3 현재 선택된 이미지 채널을 저장하는 변수
         //_currentImageChannel 변수 모두 찾아서, 관련 코드 수정할것
         eImageChannel _currentImageChannel = eImageChannel.Gray;
