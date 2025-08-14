@@ -105,7 +105,7 @@ namespace JidamVision4
             TreeNode rootNode = tvModelTree.Nodes.Add("Root");
 
             Model model = Global.Inst.InspStage.CurModel;
-            var windowList = model?.InspWindowList ?? new List<InspWindow>();
+            List<InspWindow> windowList = model.InspWindowList;
             if (windowList.Count > 0)
             {
                 foreach (InspWindow window in windowList)

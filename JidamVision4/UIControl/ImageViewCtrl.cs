@@ -326,7 +326,7 @@ namespace JidamVision4.UIControl
             foreach (DiagramEntity entity in _diagramEntityList)
             {
                 if (entity.LinkedWindow != null && _hiddenWindows.Contains(entity.LinkedWindow))
-                    continue; // ← 숨김이면 그리지 않음
+                    continue; // ← 숨김이면 그리지 않음(추가)
                 Rectangle screenRect = VirtualToScreen(entity.EntityROI);
                 using (Pen pen = new Pen(entity.EntityColor, 2))
                 {
@@ -611,7 +611,7 @@ namespace JidamVision4.UIControl
                     foreach (DiagramEntity entity in _diagramEntityList)
                     {
                         if (entity.LinkedWindow != null && _hiddenWindows.Contains(entity.LinkedWindow))
-                            continue; // ← 숨김 ROI는 히트테스트 제외
+                            continue; // ← 숨김 ROI는 히트테스트 제외(추가)
 
                         Rectangle screenRect = VirtualToScreen(entity.EntityROI);
                         if (!screenRect.Contains(e.Location))
