@@ -109,6 +109,7 @@ namespace JidamVision4.Core
         public Model CurModel
         {
             get => _model;
+            set => _model = value; //쓰기도 가능
         }
 
         //#8_LIVE#1 LIVE 모드 프로퍼티
@@ -624,6 +625,8 @@ namespace JidamVision4.Core
             SLogger.Write($"모델 로딩:{filePath}");
 
             _model = _model.Load(filePath);
+
+            
 
             if (_model is null)
             {

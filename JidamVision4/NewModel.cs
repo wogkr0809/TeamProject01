@@ -1,5 +1,6 @@
 ﻿using JidamVision4.Core;
 using JidamVision4.Setting;
+using JidamVision4.Teach;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -61,8 +62,16 @@ namespace JidamVision4
 
             string modelInfo = txtModelInfo.Text.Trim();
 
-            Global.Inst.InspStage.CurModel.CreateModel(modelPath, modelName, modelInfo);
-            Global.Inst.InspStage.CurModel.Save();
+            //culModel말고 새로운 모델 인스턴스 생성 후 새 파일로 저장 그리고 현재 모델로 교체
+            var newModel = new Model();
+            newModel.CreateModel(modelPath, modelName, modelInfo);
+            Global.Inst.InspStage.CurModel = newModel;
+            Global.Inst.InspStage.CurModel.SaveAs(saveDir);
+
+            MainForm.GetDockForm<CameraForm>().SwitchToCurrentModel();
+
+            //UI 갱신
+            MainForm.GetDockForm<ModelTreeForm>().UpdateDiagramEntity();
             this.Close();
         }
     }

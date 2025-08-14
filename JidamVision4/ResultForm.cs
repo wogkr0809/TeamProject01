@@ -1,4 +1,5 @@
 ﻿using BrightIdeasSoftware;
+using JidamVision4.Algorithm;
 using JidamVision4.Core;
 using JidamVision4.Inspect;
 using JidamVision4.Teach;
@@ -237,6 +238,35 @@ namespace JidamVision4
 
             if (window.InspResultList.Count > 0)
                 ShowDedtail(window.InspResultList[0]);
+        }
+
+        public void ClearResults()
+        {
+            // UI 스레드 보장
+            if (InvokeRequired) { BeginInvoke(new Action(ClearResults)); return; }
+
+            // 1) 트리 비우기
+            try
+            {
+                _treeListView.BeginUpdate();
+                _treeListView.SetObjects(null); 
+                _treeListView.SelectedObject = null;
+            }
+            finally
+            {
+                _treeListView.EndUpdate();
+            }
+
+            // 2) 상세창 비우기
+            _txtDetails.Clear();
+
+            // 3) 카메라 오버레이/카운트 리셋
+            var cam = MainForm.GetDockForm<CameraForm>();
+            if (cam != null)
+            {
+                cam.AddRect(new List<DrawInspectInfo>()); // 빈 리스트로 오버레이 제거
+                cam.SetInspResultCount(0, 0, 0);          // 카운터 0으로
+            }
         }
 
     }
