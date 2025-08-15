@@ -135,6 +135,9 @@ namespace JidamVision4.UIControl
         private Point? _measureP1 = null;   // 첫 클릭
         private Point? _measureP2 = null;   // 두 번째 클릭/드래그
 
+        //보드 길이 측정 #3-1
+        private bool _measureLocked = false;   // 두 번째 클릭 후 true로 잠금
+
         //보드 길이 측정 #4
         public struct MeasurementResult
         {
@@ -153,6 +156,7 @@ namespace JidamVision4.UIControl
         {
             _toolMode = mode;
             _measureP1 = _measureP2 = null;
+            _measureLocked = false;
             Invalidate();
         }
 
@@ -184,6 +188,8 @@ namespace JidamVision4.UIControl
                 DistanceMM = distMM
             };
         }
+
+   
 
         public ImageViewCtrl()
         {
@@ -384,24 +390,19 @@ namespace JidamVision4.UIControl
                         using (var bg = new SolidBrush(Color.FromArgb(160, 0, 0, 0)))
                         using (var fg = new SolidBrush(Color.White))
                         {
-                            // 라인 + 포인트
                             g.DrawLine(pen, p1, p2);
                             g.FillEllipse(Brushes.Yellow, p1.X - 3, p1.Y - 3, 6, 6);
                             g.FillEllipse(Brushes.Yellow, p2.X - 3, p2.Y - 3, 6, 6);
 
-                            // 길이 표시
                             double dx = p2.X - p1.X, dy = p2.Y - p1.Y;
                             double distPx = Math.Sqrt(dx * dx + dy * dy);
                             double ppm = SettingXml.Inst.PixelPerMM;
                             double distMM = (ppm > 0) ? distPx / ppm : 0.0;
 
-                            string label = string.Format("{0:F1} px / {1:F2} mm", distPx, distMM);
-                            SizeF sz = g.MeasureString(label, font);
-                            Point mid = new Point((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
-                            RectangleF rect = new RectangleF(mid.X - sz.Width / 2 - 4,
-                                                              mid.Y - sz.Height - 8,
-                                                              sz.Width + 8, sz.Height + 4);
-
+                            string label = $"{distPx:F1} px / {distMM:F2} mm";
+                            var sz = g.MeasureString(label, font);
+                            var mid = new Point((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
+                            var rect = new RectangleF(mid.X - sz.Width / 2 - 4, mid.Y - sz.Height - 8, sz.Width + 8, sz.Height + 4);
                             g.FillRectangle(bg, rect);
                             g.DrawString(label, font, fg, rect.Location);
                         }
@@ -664,22 +665,31 @@ namespace JidamVision4.UIControl
         //보드 길이 측정 #9
         protected override void OnMouseDown(MouseEventArgs e)
         {
-
             if (_toolMode == ToolMode.Measure)
             {
-                if (_measureP1 == null)           // 1st click
+                if (_measureP1 == null)               // 1st click: 시작
                 {
                     _measureP1 = e.Location;
                     _measureP2 = e.Location;
+                    _measureLocked = false;
                 }
-                else                               // 2nd click → Commit (잠금은 부록 A)
+                else if (!_measureLocked)              // 2nd click: 끝점 고정
                 {
                     _measureP2 = e.Location;
+                    _measureLocked = true;             // ★ 잠금
                     CommitMeasurement();
                 }
+                else                                   // 잠금 상태에서 또 클릭: 새 측정 시작
+                {
+                    _measureP1 = e.Location;
+                    _measureP2 = e.Location;
+                    _measureLocked = false;
+                }
+
                 Invalidate();
-                return;
+                return;                                // ROI 편집 로직으로 안 넘김
             }
+
             base.OnMouseDown(e);
         }
 
@@ -688,9 +698,9 @@ namespace JidamVision4.UIControl
         {
             if (_toolMode == ToolMode.Measure)
             {
-                if (_measureP1 != null)
+                if (_measureP1 != null && !_measureLocked)   // ★ 잠금 해제일 때만 따라다님
                 {
-                    _measureP2 = e.Location; // 러버밴드
+                    _measureP2 = e.Location;
                     Invalidate();
                 }
                 return;
@@ -703,7 +713,8 @@ namespace JidamVision4.UIControl
         {
             if (_toolMode == ToolMode.Measure)
             {
-                _measureP1 = _measureP2 = null; // 초기화
+                _measureP1 = _measureP2 = null;
+                _measureLocked = false;                  // ★ 추가
                 Invalidate();
                 return;
             }
