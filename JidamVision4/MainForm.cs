@@ -95,6 +95,10 @@ namespace JidamVision4
             var propWindow = new PropertiesForm();
             propWindow.Show(_dockPanel, DockState.DockRight);
 
+            var countForm = new CountForm();
+            // 같은 Pane(탭 공유)으로 띄우기
+            countForm.Show(propWindow.Pane, null);
+
             //#14_LOGFORM#2 로그창 추가
             var logWindow = new LogForm();
             logWindow.Show(propWindow.Pane, DockAlignment.Bottom, 0.3);

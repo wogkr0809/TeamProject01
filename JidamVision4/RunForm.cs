@@ -30,7 +30,8 @@ namespace JidamVision4
         //#8_INSPECT_BINARY#20 검사 시작 버튼을 디자인창에서 만들고, 검사 함수 호출
         private void btnStart_Click(object sender, EventArgs e)
         {
-            string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}";
+
+            string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}"; 
             Global.Inst.InspStage.InspectReady("LOT_NUMBER", serialID);
 
             if (SettingXml.Inst.CamType == Grab.CameraType.None)

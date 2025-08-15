@@ -23,7 +23,8 @@ namespace JidamVision4.Core
         None = 0,
         Chip,
         lead,
-        Sub,
+        Resistance,
+        Scratch,
         ID
     }
 

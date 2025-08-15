@@ -109,6 +109,7 @@ namespace JidamVision4.Inspect
                 cameraForm.AddRect(allRects);
                 cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
             }
+            Global.Inst.InspStage.AddAccumCount(1, isDefect ? 0 : 1, isDefect ? 1 : 0);
 
             return true;
         }

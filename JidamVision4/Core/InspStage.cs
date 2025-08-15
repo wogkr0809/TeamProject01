@@ -40,8 +40,22 @@ namespace JidamVision4.Core
     */
 
     //검사와 관련된 클래스를 관리하는 클래스
+    public class AccumCounter
+    {
+        public long Total { get; private set; } 
+        public long OK { get; private set; }
+        public long NG { get; private set; }
+
+        public void Reset() { Total = OK = NG = 0; }
+        public void Add(int total, int ok, int ng)
+        { Total += total; OK += ok; NG += ng; }
+    }
     public class InspStage : IDisposable
     {
+
+        public AccumCounter Accum { get; } = new AccumCounter();
+        public event Action<AccumCounter> AccumChanged;
+
         public static readonly int MAX_GRAB_BUF = 1;
 
         private ImageSpace _imageSpace = null;
@@ -722,6 +736,10 @@ namespace JidamVision4.Core
             if (!_inspWorker.RunInspect(out isDefect))
                 return false;
 
+           
+        
+          
+
             return true;
         }
 
@@ -859,6 +877,16 @@ namespace JidamVision4.Core
             {
                 cameraForm.SetWorkingState(workingState);
             }
+        }
+        public void ResetAccum()
+        {
+            Accum.Reset();
+            AccumChanged?.Invoke(Accum);
+        }
+        public void AddAccumCount(int total, int ok, int ng)
+        {
+            Accum.Add(total, ok, ng);
+            AccumChanged?.Invoke(Accum);
         }
         #region Disposable
 
