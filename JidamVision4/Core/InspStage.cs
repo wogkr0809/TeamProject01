@@ -662,17 +662,29 @@ namespace JidamVision4.Core
             return true;
         }
 
-        public void SaveModel(string filePath)
-        {
-            SLogger.Write($"모델 저장:{filePath}");
-
-            //입력 경로가 없으면 현재 모델 저장
-            if (string.IsNullOrEmpty(filePath))
-                Global.Inst.InspStage.CurModel.Save();
-            else
-                Global.Inst.InspStage.CurModel.SaveAs(filePath);
-        }
         
+
+        /// <summary>
+        /// ".xml" 확장자 보장 + 절대경로화 + 파일명(확장자 제외) 추출
+        /// </summary>
+        private static void NormalizeModelPath(
+            string inputPath,
+            out string normalizedFullPath,
+            out string nameWithoutExt)
+        {
+            if (string.IsNullOrWhiteSpace(inputPath))
+                throw new ArgumentException("filePath is null or empty");
+
+            string path = inputPath.Trim();
+
+            // 확장자 보장
+            if (!string.Equals(Path.GetExtension(path), ".xml", StringComparison.OrdinalIgnoreCase))
+                path += ".xml";
+
+            normalizedFullPath = Path.GetFullPath(path);
+            nameWithoutExt = Path.GetFileNameWithoutExtension(normalizedFullPath);
+        }
+
         private bool LastestModelOpen()
         {
             if (_lastestModelOpen)

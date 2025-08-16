@@ -200,25 +200,29 @@ namespace JidamVision4
 
         private void modelSaveMenuItem_Click(object sender, EventArgs e)
         {
-            //모델 파일 저장
-            Global.Inst.InspStage.SaveModel("");
+            // 현재 모델 저장
+            var m = Global.Inst.InspStage.CurModel;
+            if (string.IsNullOrWhiteSpace(m.ModelPath))
+            {
+                MessageBox.Show("현재 모델이 없습니다.");
+                return;
+            }
+            m.Save();
+            SLogger.Write($"[Model] 저장: {m.ModelName} ({m.ModelPath})");
         }
 
         private void modelSaveAsMenuItem_Click(object sender, EventArgs e)
         {
-            //다른이름으로 모델 파일 저장
-            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            using (var sfd = new SaveFileDialog())
             {
-                saveFileDialog.InitialDirectory = SettingXml.Inst.ModelDir;
-                saveFileDialog.Title = "모델 파일 선택";
-                saveFileDialog.Filter = "Model Files|*.xml;";
-                saveFileDialog.DefaultExt = "xml";
+                sfd.InitialDirectory = SettingXml.Inst.ModelDir;
+                sfd.Title = "모델 파일 저장";
+                sfd.Filter = "Model Files (*.xml)|*.xml";
+                sfd.DefaultExt = "xml";
+                sfd.AddExtension = true;
 
-                if (saveFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    string filePath = saveFileDialog.FileName;
-                    Global.Inst.InspStage.SaveModel(filePath);
-                }
+                if (sfd.ShowDialog() == DialogResult.OK)
+                    Global.Inst.InspStage.CurModel?.SaveAs(sfd.FileName);
             }
         }
 

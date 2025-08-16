@@ -1,6 +1,7 @@
 ﻿using JidamVision4.Core;
 using JidamVision4.Setting;
 using JidamVision4.Teach;
+using JidamVision4.Util;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -36,7 +37,7 @@ namespace JidamVision4
         private void btnCreate_Click(object sender, EventArgs e)
         {
             string modelName = txtModelName.Text.Trim();
-            if (modelName == "")
+            if (string.IsNullOrWhiteSpace(modelName))
             {
                 MessageBox.Show("모덜 이름을 입력하세요.");
                 return;
@@ -49,14 +50,15 @@ namespace JidamVision4
                 return;
             }
 
-            string modelPath = Path.Combine(modelDir, modelName, modelName + ".xml");
+            string saveDir = Path.Combine(modelDir, modelName);
+            string modelPath = Path.Combine(saveDir, $"{modelName}.xml");
             if (File.Exists(modelPath))
             {
                 MessageBox.Show("이미 존재하는 모델 이름입니다.");
                 return;
             }
 
-            string saveDir = Path.Combine(modelDir, modelName);
+            
             if (!Directory.Exists(saveDir))
                 Directory.CreateDirectory(saveDir);
 
@@ -65,8 +67,10 @@ namespace JidamVision4
             //culModel말고 새로운 모델 인스턴스 생성 후 새 파일로 저장 그리고 현재 모델로 교체
             var newModel = new Model();
             newModel.CreateModel(modelPath, modelName, modelInfo);
+            newModel.Save();
             Global.Inst.InspStage.CurModel = newModel;
-            Global.Inst.InspStage.CurModel.SaveAs(saveDir);
+
+            SLogger.Write($"[Model] 새 모델 생성: {modelName} ({modelPath})");
 
             MainForm.GetDockForm<CameraForm>().SwitchToCurrentModel();
 
