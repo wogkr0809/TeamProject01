@@ -204,7 +204,7 @@ namespace JidamVision4
             var m = Global.Inst.InspStage.CurModel;
             if (string.IsNullOrWhiteSpace(m.ModelPath))
             {
-                MessageBox.Show("현재 모델이 없습니다.");
+                MessageBox.Show("현재 모델이 없습니다.\n 첫 저장일 경우, Save Model As를 해주세요.");
                 return;
             }
             m.Save();
