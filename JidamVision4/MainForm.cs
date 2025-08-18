@@ -253,5 +253,13 @@ namespace JidamVision4
         {
 
         }
+
+        private void modelCloseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SLogger.Write($"모델 닫기 안내");
+            SaveGuide saveGuide = new SaveGuide();
+            saveGuide.StartPosition = FormStartPosition.CenterScreen;
+            saveGuide.ShowDialog();
+        }
     }
 }

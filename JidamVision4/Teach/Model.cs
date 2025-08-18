@@ -15,9 +15,9 @@ namespace JidamVision4.Teach
     public class Model
     {
         //모델 정보 저장을 위해 추가한 프로퍼티
-        public string ModelName { get; set; } = "";
-        public string ModelInfo { get; set; } = "";
-        public string ModelPath { get; set; } = "";
+        public string ModelName { get; set; } = string.Empty;
+        public string ModelInfo { get; set; } = string.Empty;
+        public string ModelPath { get; set; } = string.Empty;
 
         public string InspectImagePath { get; set; } = "";
 
@@ -149,6 +149,16 @@ namespace JidamVision4.Teach
                 ModelPath = oldPath;
                 ModelName = oldName;
             }
+        }
+
+        public void Reset()
+        {
+            ModelPath = string.Empty;
+            ModelName = string.Empty;
+            InspWindowList.Clear();
+
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            cameraForm.UpdateDiagramEntity();
         }
     }
 }

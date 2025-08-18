@@ -44,6 +44,7 @@
             this.measureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.miMeasureDistance = new System.Windows.Forms.ToolStripMenuItem();
             this.miMeasureBoardSize = new System.Windows.Forms.ToolStripMenuItem();
+            this.modelCloseToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -69,6 +70,7 @@
             this.modelOpenMenuItem,
             this.modelSaveMenuItem,
             this.modelSaveAsMenuItem,
+            this.modelCloseToolStripMenuItem,
             this.toolStripSeparator1,
             this.imageOpenToolStripMenuItem,
             this.imageSaveToolStripMenuItem});
@@ -79,47 +81,47 @@
             // modelNewMenuItem
             // 
             this.modelNewMenuItem.Name = "modelNewMenuItem";
-            this.modelNewMenuItem.Size = new System.Drawing.Size(237, 34);
+            this.modelNewMenuItem.Size = new System.Drawing.Size(270, 34);
             this.modelNewMenuItem.Text = "Model New";
             this.modelNewMenuItem.Click += new System.EventHandler(this.modelNewMenuItem_Click);
             // 
             // modelOpenMenuItem
             // 
             this.modelOpenMenuItem.Name = "modelOpenMenuItem";
-            this.modelOpenMenuItem.Size = new System.Drawing.Size(237, 34);
+            this.modelOpenMenuItem.Size = new System.Drawing.Size(270, 34);
             this.modelOpenMenuItem.Text = "Model Open";
             this.modelOpenMenuItem.Click += new System.EventHandler(this.modelOpenMenuItem_Click);
             // 
             // modelSaveMenuItem
             // 
             this.modelSaveMenuItem.Name = "modelSaveMenuItem";
-            this.modelSaveMenuItem.Size = new System.Drawing.Size(237, 34);
+            this.modelSaveMenuItem.Size = new System.Drawing.Size(270, 34);
             this.modelSaveMenuItem.Text = "Model Save";
             this.modelSaveMenuItem.Click += new System.EventHandler(this.modelSaveMenuItem_Click);
             // 
             // modelSaveAsMenuItem
             // 
             this.modelSaveAsMenuItem.Name = "modelSaveAsMenuItem";
-            this.modelSaveAsMenuItem.Size = new System.Drawing.Size(237, 34);
+            this.modelSaveAsMenuItem.Size = new System.Drawing.Size(270, 34);
             this.modelSaveAsMenuItem.Text = "Model Save As";
             this.modelSaveAsMenuItem.Click += new System.EventHandler(this.modelSaveAsMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(234, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(267, 6);
             // 
             // imageOpenToolStripMenuItem
             // 
             this.imageOpenToolStripMenuItem.Name = "imageOpenToolStripMenuItem";
-            this.imageOpenToolStripMenuItem.Size = new System.Drawing.Size(237, 34);
+            this.imageOpenToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
             this.imageOpenToolStripMenuItem.Text = "Image Open";
             this.imageOpenToolStripMenuItem.Click += new System.EventHandler(this.imageOpenToolStripMenuItem_Click);
             // 
             // imageSaveToolStripMenuItem
             // 
             this.imageSaveToolStripMenuItem.Name = "imageSaveToolStripMenuItem";
-            this.imageSaveToolStripMenuItem.Size = new System.Drawing.Size(237, 34);
+            this.imageSaveToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
             this.imageSaveToolStripMenuItem.Text = "Image Save";
             // 
             // setupToolStripMenuItem
@@ -179,6 +181,13 @@
             this.miMeasureBoardSize.Text = "Board Size (Auto)";
             this.miMeasureBoardSize.Click += new System.EventHandler(this.miMeasureBoardSize_Click);
             // 
+            // modelCloseToolStripMenuItem
+            // 
+            this.modelCloseToolStripMenuItem.Name = "modelCloseToolStripMenuItem";
+            this.modelCloseToolStripMenuItem.Size = new System.Drawing.Size(270, 34);
+            this.modelCloseToolStripMenuItem.Text = "Model Close";
+            this.modelCloseToolStripMenuItem.Click += new System.EventHandler(this.modelCloseToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
@@ -215,5 +224,6 @@
         private System.Windows.Forms.ToolStripMenuItem measureToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem miMeasureDistance;
         private System.Windows.Forms.ToolStripMenuItem miMeasureBoardSize;
+        private System.Windows.Forms.ToolStripMenuItem modelCloseToolStripMenuItem;
     }
 }

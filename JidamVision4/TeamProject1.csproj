@@ -197,6 +197,12 @@
     <Compile Include="RunForm.Designer.cs">
       <DependentUpon>RunForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="SaveGuide.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SaveGuide.Designer.cs">
+      <DependentUpon>SaveGuide.cs</DependentUpon>
+    </Compile>
     <Compile Include="Sequence\Communicator.cs" />
     <Compile Include="Sequence\VisionSequence.cs" />
     <Compile Include="Setting\CameraSetting.cs">
@@ -255,6 +261,7 @@
     <Compile Include="Util\BitmapExtension.cs" />
     <Compile Include="Util\ImageFileSorter.cs" />
     <Compile Include="Util\ImageLoader.cs" />
+    <Compile Include="Util\ModelCloser.cs" />
     <Compile Include="Util\SLogger.cs" />
     <Compile Include="Util\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">
@@ -301,6 +308,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="RunForm.resx">
       <DependentUpon>RunForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="SaveGuide.resx">
+      <DependentUpon>SaveGuide.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Setting\CameraSetting.resx">
       <DependentUpon>CameraSetting.cs</DependentUpon>
