@@ -229,8 +229,14 @@ namespace JidamVision4.UIControl
                 case InspWindowType.lead:
                     color = Color.Yellow;
                     break;
-                case InspWindowType.Sub:
+                case InspWindowType.Resistance:
                     color = Color.Orange;
+                    break;
+                case InspWindowType.Scratch:
+                    color = Color.Brown;
+                    break;
+                case InspWindowType.Soldering:
+                    color = Color.Brown;
                     break;
                 case InspWindowType.ID:
                     color = Color.Magenta;

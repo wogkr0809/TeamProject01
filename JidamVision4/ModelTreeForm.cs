@@ -52,7 +52,7 @@ namespace JidamVision4
             _contextMenu = new ContextMenuStrip();
 
             List<InspWindowType> windowTypeList;
-            windowTypeList = new List<InspWindowType> { InspWindowType.Chip, InspWindowType.lead, InspWindowType.Sub,InspWindowType.ID};
+            windowTypeList = new List<InspWindowType> { InspWindowType.Chip, InspWindowType.lead, InspWindowType.Resistance, InspWindowType.Scratch, InspWindowType.Soldering, InspWindowType.ID };
             
             foreach (InspWindowType windowType in windowTypeList)
                 _contextMenu.Items.Add(new ToolStripMenuItem(windowType.ToString(), null, AddNode_Click) { Tag = windowType });

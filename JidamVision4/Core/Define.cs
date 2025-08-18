@@ -24,7 +24,8 @@ namespace JidamVision4.Core
         Chip,
         lead,
         Resistance,
-        Sub,
+        Scratch,
+        Soldering,
         ID
     }
 

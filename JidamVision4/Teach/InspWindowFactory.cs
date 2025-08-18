@@ -66,11 +66,18 @@ namespace JidamVision4.Teach
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
-                case InspWindowType.Sub:
+                case InspWindowType.Resistance:
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
-
+                case InspWindowType.Scratch:
+                    inspWindow.AddInspAlgorithm(InspectType.InspMatch);
+                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
+                    break;
+                case InspWindowType.Soldering:
+                    inspWindow.AddInspAlgorithm(InspectType.InspMatch);
+                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
+                    break;
                 //#15_INSP_WORKER#4 InspWindowType.ID추가, 보정을 위해 패턴매칭만 추가
                 case InspWindowType.ID:
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
@@ -92,12 +99,20 @@ namespace JidamVision4.Teach
                     prefix = "Chip";
                     break;
                 case InspWindowType.lead:
-                    name = "Lead";
-                    prefix = "Lead";
+                    name = "lead";
+                    prefix = "lead";
                     break;
-                case InspWindowType.Sub:
-                    name = "Sub";
-                    prefix = "Sub";
+                case InspWindowType.Resistance:
+                    name = "Resistance";
+                    prefix = "Resistance";
+                    break;
+                case InspWindowType.Scratch:
+                    name = " Scratch";
+                    prefix = " Scratch";
+                    break;
+                case InspWindowType.Soldering:
+                    name = " Soldering";
+                    prefix = " Soldering";
                     break;
                 case InspWindowType.ID:
                     name = "ID";

@@ -748,10 +748,6 @@ namespace JidamVision4.Core
             if (!_inspWorker.RunInspect(out isDefect))
                 return false;
 
-           
-        
-          
-
             return true;
         }
 
