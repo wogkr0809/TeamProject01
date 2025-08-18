@@ -122,6 +122,10 @@
     <Compile Include="CountForm.Designer.cs">
       <DependentUpon>CountForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Count\GfxExt.cs" />
+    <Compile Include="MetricsView.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Grab\GrabModel.cs" />
     <Compile Include="Grab\HikRobotCam.cs" />
     <Compile Include="Grab\WebCam.cs" />
@@ -266,6 +270,9 @@
     <Compile Include="Util\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">
       <DependentUpon>CameraForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="CountForm.resx">
+      <DependentUpon>CountForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="LogForm.resx">
       <DependentUpon>LogForm.cs</DependentUpon>

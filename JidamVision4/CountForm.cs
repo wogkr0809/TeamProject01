@@ -14,52 +14,54 @@ namespace JidamVision4
 {
     public partial class CountForm : DockContent
     {
-
-        DataGridView _grid;
-        Button _btnReset; // 원치 않으면 제거 가능
-
+        MetricsView _view;
+        Button _btnReset, _btnExport;
+       
         public CountForm()
         {
             Text = "Counter";
-            Width = 260;
+            Padding = new Padding(10);
 
-            _grid = new DataGridView
-            {
-                Dock = DockStyle.Top,
-                Height = 130,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                RowHeadersVisible = false,
-                ColumnHeadersVisible = false
-            };
-            _grid.Columns.Add("c1", "항목");
-            _grid.Columns.Add("c2", "값");
-            _grid.Rows.Add("Total", 0);
-            _grid.Rows.Add("OK", 0);
-            _grid.Rows.Add("NG", 0);
+            _view = new MetricsView { Dock = DockStyle.Fill };
 
-            _btnReset = new Button { Dock = DockStyle.Top, Height = 32, Text = "Reset" };
+            _btnExport = new Button { Dock = DockStyle.Bottom, Height = 36, Text = "Export PDF" };
+            _btnReset = new Button { Dock = DockStyle.Bottom, Height = 36, Text = "Reset" };
+
+            Controls.Add(_view);
+            Controls.Add(_btnExport);   // 아래쪽
+            Controls.Add(_btnReset);    // 그 위(Reset → Export 순서로 보이게)
+
             _btnReset.Click += (s, e) => Global.Inst.InspStage.ResetAccum();
-
-            Controls.Add(_btnReset);   // Reset 버튼을 빼고 싶으면 이 줄 주석
-            Controls.Add(_grid);
+            _btnExport.Click += (s, e) => ExportPng();  // PDF 라이브러리 없으면 PNG로 내보내기
 
             Global.Inst.InspStage.AccumChanged += OnAccumChanged;
         }
-
+           
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             Global.Inst.InspStage.AccumChanged -= OnAccumChanged;
+      
             base.OnFormClosed(e);
         }
 
         void OnAccumChanged(AccumCounter c)
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => OnAccumChanged(c))); return; }
+            _view.UpdateValues(c.Total, c.OK, c.NG);
+        }
+       
 
-            _grid.Rows[0].Cells[1].Value = c.Total;
-            _grid.Rows[1].Cells[1].Value = c.OK;
-            _grid.Rows[2].Cells[1].Value = c.NG;
+        void ExportPng()
+        {
+            using (var sfd = new SaveFileDialog { Filter = "PNG Image|*.png", FileName = "Dashboard.png" })
+            {
+                if (sfd.ShowDialog() != DialogResult.OK) return;
+                using (var bmp = new Bitmap(Width, Height))
+                {
+                    DrawToBitmap(bmp, new Rectangle(0, 0, bmp.Width, bmp.Height));
+                    bmp.Save(sfd.FileName);
+                }
+            }
         }
     }
 }

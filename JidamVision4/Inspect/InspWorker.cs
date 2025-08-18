@@ -110,8 +110,10 @@ namespace JidamVision4.Inspect
                 cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
             }
             Global.Inst.InspStage.AddAccumCount(1, isDefect ? 0 : 1, isDefect ? 1 : 0);
-
+            // 활성 ROI 리스트: active
+            
             return true;
+
         }
 
         //특정 InspWindow에 대한 검사 진행

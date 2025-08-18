@@ -91,7 +91,7 @@ namespace JidamVision4.Setting
         private static SettingXml CreateDefaultInstance()
         {
             SettingXml setting = new SettingXml();
-            setting.ModelDir = @"C:\Users\dev2025\Desktop\Model";
+            setting.ModelDir = "";
             return setting;
         }
 

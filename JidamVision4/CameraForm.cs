@@ -42,6 +42,7 @@ namespace JidamVision4
         {
             InitializeComponent();
 
+
             this.FormClosed += CameraForm_FormClosed;
 
             //#10_INSPWINDOW#23 ImageViewCtrl에서 발생하는 이벤트 처리
@@ -62,6 +63,7 @@ namespace JidamVision4
                     break;
                 case EntityActionType.Inspect:
                     UpdateDiagramEntity();
+                    imageViewer.ClearNudgePreview();  // ★ 프리뷰 정리
                     Global.Inst.InspStage.TryInspection(e.InspWindow);
                     break;
                 case EntityActionType.Add:
@@ -72,9 +74,16 @@ namespace JidamVision4
                     break;
                 case EntityActionType.Move:
                     Global.Inst.InspStage.MoveInspWindow(e.InspWindow, e.OffsetMove);
+                    // ★ 풀 리빌드 대신 미리보기만 그리기
+                    imageViewer.SetNudgePreview(e.Rect);
+                    // UpdateDiagramEntity();  // ← 이 줄은 지우거나 주석 (전체 오버레이 리셋됨)
                     break;
+
                 case EntityActionType.Resize:
                     Global.Inst.InspStage.ModifyInspWindow(e.InspWindow, e.Rect);
+                    // ★ 리사이즈 미리보기
+                    imageViewer.SetNudgePreview(e.Rect);
+                    // UpdateDiagramEntity();  // ← 주석
                     break;
                 case EntityActionType.Delete:
                     Global.Inst.InspStage.DelInspWindow(e.InspWindow);

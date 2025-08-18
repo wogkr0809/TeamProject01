@@ -24,6 +24,7 @@ namespace JidamVision4.Teach
 
     public class InspWindow
     {
+
         public InspWindowType InspWindowType { get; set; }
 
         public string Name { get; set; }
