@@ -189,7 +189,10 @@ namespace JidamVision4.UIControl
             };
         }
 
-   
+        // === [ROI Nudge Preview] preview layer ===
+        private bool _nudgePreviewOn = false;
+        private Rectangle _nudgePreviewRect; // 이미지 좌표계
+
 
         public ImageViewCtrl()
         {
@@ -414,6 +417,17 @@ namespace JidamVision4.UIControl
                         }
                     }
 
+                    // === [ROI Nudge Preview] draw top-most ===
+                    if (_nudgePreviewOn)
+                    {
+                        // 이미지좌표 → 화면좌표
+                        Rectangle sr = VirtualToScreen(_nudgePreviewRect);
+                        using (var pen = new Pen(Color.DeepSkyBlue, 2f))
+                        {
+                            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                            e.Graphics.DrawRectangle(pen, sr);
+                        }
+                    }
 
                     // 캔버스를 UserControl 화면에 표시
                     e.Graphics.DrawImage(Canvas, 0, 0);
@@ -1181,6 +1195,49 @@ namespace JidamVision4.UIControl
                 (int)(screenRect.Height / _curZoom + 0.5f));
         }
 
+        // === [ROI Nudge] 헬퍼: 이미지 경계 내로 보정 ===
+        private Rectangle ClampToImage(Rectangle r)
+        {
+            if (_bitmapImage == null) return r;
+
+            if (r.X < 0) r.X = 0;
+            if (r.Y < 0) r.Y = 0;
+
+            if (r.Right > _bitmapImage.Width) r.X = _bitmapImage.Width - r.Width;
+            if (r.Bottom > _bitmapImage.Height) r.Y = _bitmapImage.Height - r.Height;
+
+            if (r.X < 0) r.X = 0;
+            if (r.Y < 0) r.Y = 0;
+
+            if (r.Width > _bitmapImage.Width) r.Width = _bitmapImage.Width;
+            if (r.Height > _bitmapImage.Height) r.Height = _bitmapImage.Height;
+
+            return r;
+        }
+
+        // === [ROI Nudge] 화살표키를 입력키로 취급 ===
+        protected override bool IsInputKey(Keys keyData)
+        {
+            Keys k = keyData & Keys.KeyCode;
+            if (k == Keys.Up || k == Keys.Down || k == Keys.Left || k == Keys.Right)
+                return true;
+            return base.IsInputKey(keyData);
+        }
+
+        // === [ROI Nudge Preview] API ===
+        public void SetNudgePreview(OpenCvSharp.Rect rc)
+        {
+            _nudgePreviewOn = true;
+            _nudgePreviewRect = new Rectangle(rc.X, rc.Y, rc.Width, rc.Height);
+            this.Invalidate(); // 즉시 다시 그리기
+        }
+
+        public void ClearNudgePreview()
+        {
+            _nudgePreviewOn = false;
+            this.Invalidate();
+        }
+
         private Rectangle VirtualToScreen(Rectangle virtualRect)
         {
             PointF offset = GetScreenOffset();
@@ -1270,6 +1327,99 @@ namespace JidamVision4.UIControl
                         break;
                 }
             }
+
+            // === [ROI Nudge] 화살표키로 이동/리사이즈 시작 ===
+            {
+                // 선택 없으면 통과
+                if (_multiSelectedEntities != null && _multiSelectedEntities.Count > 0)
+                {
+                    // 스텝: 기본 5px, Shift=10, Alt=1
+                    int step = 5;
+                    if ((keyData & Keys.Shift) == Keys.Shift) step = 10;
+                    if ((keyData & Keys.Alt) == Keys.Alt) step = 1;
+
+                    // Ctrl이면 리사이즈 모드
+                    bool resize = ((keyData & Keys.Control) == Keys.Control);
+
+                    Keys keyOnly = keyData & Keys.KeyCode;
+
+                    // 화면 스텝 -> 이미지 좌표 스텝(줌 보정)
+                    int dx = 0, dy = 0;
+                    int s = (int)((float)step / (_curZoom == 0 ? 1f : _curZoom) + 0.5f);
+
+                    if (keyOnly == Keys.Up) dy = -s;
+                    else if (keyOnly == Keys.Down) dy = +s;
+                    else if (keyOnly == Keys.Left) dx = -s;
+                    else if (keyOnly == Keys.Right) dx = +s;
+
+                    if (dx != 0 || dy != 0)
+                    {
+                        if (!resize)
+                        {
+                            // ─ 이동: 다중 선택 모두 이동 ─
+                            foreach (var ent in _multiSelectedEntities)
+                            {
+                                if (ent == null || ent.IsHold) continue;
+                                var r = ent.EntityROI;
+                                r.X += dx; r.Y += dy;
+                                r = ClampToImage(r);
+                                ent.EntityROI = r;
+
+                                // (선택) 외부 알림/로그/동기화
+                                if (ent.LinkedWindow != null)
+                                    DiagramEntityEvent?.Invoke(
+                                        this,
+                                        new DiagramEntityEventArgs(
+                                            EntityActionType.Move,
+                                            ent.LinkedWindow,
+                                            _newRoiType,
+                                            r,
+                                            new Point(dx, dy))
+                                    );
+                            }
+
+                            Invalidate();
+                            return true; // 화살표 처리 완료
+                        }
+                        else
+                        {
+                            // ─ 리사이즈: 대표 선택(0번)만 ─
+                            var ent = _multiSelectedEntities[0];
+                            if (ent != null && !ent.IsHold)
+                            {
+                                var r = ent.EntityROI;
+                                const int MIN = 3;
+
+                                if (keyOnly == Keys.Up) { r.Y += dy; r.Height -= dy; }
+                                if (keyOnly == Keys.Down) { r.Height += dy; }
+                                if (keyOnly == Keys.Left) { r.X += dx; r.Width -= dx; }
+                                if (keyOnly == Keys.Right) { r.Width += dx; }
+
+                                if (r.Width < MIN) r.Width = MIN;
+                                if (r.Height < MIN) r.Height = MIN;
+
+                                r = ClampToImage(r);
+                                ent.EntityROI = r;
+
+                                if (ent.LinkedWindow != null)
+                                    DiagramEntityEvent?.Invoke(
+                                        this,
+                                        new DiagramEntityEventArgs(
+                                            EntityActionType.Resize,
+                                            ent.LinkedWindow,
+                                            _newRoiType,
+                                            r,
+                                            Point.Empty)
+                                    );
+
+                                Invalidate();
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            // === [ROI Nudge] 끝 ===
 
             return base.ProcessCmdKey(ref msg, keyData);
         }
