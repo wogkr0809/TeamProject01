@@ -113,7 +113,7 @@ namespace JidamVision4
                     if (window == null) continue;
 
                     // 2) 반드시 Tag에 연결(핵심)
-                    string label = window.UID;
+                    string label = !string.IsNullOrWhiteSpace(window.Name) ? window.Name : window.UID;
                     TreeNode node = new TreeNode(label)
                     {
                         Tag = window,   // ★ 여기가 핵심

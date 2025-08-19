@@ -53,6 +53,74 @@ namespace JidamVision4.Core
     
     public class InspStage : IDisposable
     {
+
+        // === [ROI Name] 동일 타입의 "가장 작은 미사용 번호" 생성 ===
+        private string GenerateNextName(InspWindowType type)
+        {
+            string prefix = type.ToString();  // "Chip", "lead", ...
+            var used = new HashSet<int>();
+
+            var list = _model?.InspWindowList;
+            if (list != null)
+            {
+                foreach (var w in list)
+                {
+                    if (w == null || w.InspWindowType != type) continue;
+
+                    string label = !string.IsNullOrWhiteSpace(w.Name) ? w.Name
+                                 : !string.IsNullOrWhiteSpace(w.UID) ? w.UID
+                                 : null;
+                    if (string.IsNullOrWhiteSpace(label)) continue;
+
+                    int n = ExtractNumber(label, prefix);
+                    if (n > 0) used.Add(n);
+                }
+            }
+
+            int candidate = 1;
+            while (used.Contains(candidate)) candidate++;
+            return $"{prefix}_{candidate:000000}";
+        }
+
+        // label에서 번호 추출: "Chip" -> 1, "Chip_0003" -> 3, 매치 실패시 -1
+        private static int ExtractNumber(string label, string prefix)
+        {
+            if (string.IsNullOrWhiteSpace(label)) return -1;
+            if (label.Trim().Equals(prefix, StringComparison.OrdinalIgnoreCase)) return 1;
+
+            var m = System.Text.RegularExpressions.Regex.Match(
+                label, @"^" + System.Text.RegularExpressions.Regex.Escape(prefix) + @"_(\d+)$",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+            if (m.Success && int.TryParse(m.Groups[1].Value, out int n) && n > 0) return n;
+            return -1;
+        }
+
+        // 타입별로 1부터 다시 매겨서 '구멍' 제거(삭제 후 재사용 보장)
+        private void NormalizeWindowNamesForType(InspWindowType type)
+        {
+            if (_model?.InspWindowList == null) return;
+
+            string prefix = type.ToString();
+            var same = _model.InspWindowList
+                .Where(w => w != null && w.InspWindowType == type)
+                .Select((w, idx) => new { w, idx, n = ExtractNumber(!string.IsNullOrWhiteSpace(w.Name) ? w.Name : w.UID, prefix) })
+                .OrderBy(x => x.n > 0 ? x.n : int.MaxValue)   // 기존 번호 있으면 그 순서 우선
+                .ThenBy(x => x.idx)                            // 없으면 등장 순서
+                .ToList();
+
+            int i = 1;
+            foreach (var x in same)
+                x.w.Name = $"{prefix}_{i++:000000}";
+        }
+
+        // === [ROI Name] 강제 배정 ===
+        private void ForceAssignNameByRule(InspWindow w)
+        {
+            if (w == null) return;
+            w.Name = GenerateNextName(w.InspWindowType);
+        }
+
         public NgCategoryCounter NgCounter { get; } = new NgCategoryCounter();
 
         public event Action<IReadOnlyDictionary<string, long>> CategoryChanged
@@ -89,6 +157,7 @@ namespace JidamVision4.Core
         //#15_INSP_WORKER#5 InspWorker 클래스 선언
         private InspWorker _inspWorker = null;
         private ImageLoader _imageLoader = null;
+
 
         //#16_LAST_MODELOPEN#1 가장 최근 모델 파일 경로와 저장할 REGISTRY 키 변수 선언
 
@@ -434,19 +503,19 @@ namespace JidamVision4.Core
         //ImageViwer에서 ROI를 추가하여, InspWindow생성하는 함수
         public void AddInspWindow(InspWindowType windowType, Rect rect)
         {
-            InspWindow inspWindow = _model.AddInspWindow(windowType);
-            if (inspWindow is null)
-                return;
+            var inspWindow = _model.AddInspWindow(windowType);
+            if (inspWindow is null) return;
+
+            inspWindow.Name = GenerateNextName(windowType);   // ★ 여기서 반드시 부여
 
             inspWindow.WindowArea = rect;
             inspWindow.IsTeach = false;
 
-            //#11_MATCHING#7 새로운 ROI가 추가되면, 티칭 이미지 추가
             SetTeachingImage(inspWindow);
             UpdateProperty(inspWindow);
             UpdateDiagramEntity();
 
-            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
             if (cameraForm != null)
             {
                 cameraForm.SelectDiagramEntity(inspWindow);
@@ -456,23 +525,22 @@ namespace JidamVision4.Core
 
         public bool AddInspWindow(InspWindow sourceWindow, OpenCvSharp.Point offset)
         {
-            InspWindow cloneWindow = sourceWindow.Clone(offset);
-            if (cloneWindow is null)
-                return false;
+            var cloneWindow = sourceWindow?.Clone(offset);
+            if (cloneWindow is null) return false;
 
-            if (!_model.AddInspWindow(cloneWindow))
-                return false;
+            cloneWindow.Name = GenerateNextName(cloneWindow.InspWindowType); // ★ 복제도 새 번호
+
+            if (!_model.AddInspWindow(cloneWindow)) return false;
 
             UpdateProperty(cloneWindow);
             UpdateDiagramEntity();
 
-            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
             if (cameraForm != null)
             {
                 cameraForm.SelectDiagramEntity(cloneWindow);
                 SelectInspWindow(cloneWindow);
             }
-
             return true;
         }
 
@@ -503,6 +571,8 @@ namespace JidamVision4.Core
         public void DelInspWindow(InspWindow inspWindow)
         {
             _model.DelInspWindow(inspWindow);
+            if (inspWindow != null)
+                NormalizeWindowNamesForType(inspWindow.InspWindowType);  // ★ 재정렬
             UpdateDiagramEntity();
         }
 
@@ -510,6 +580,8 @@ namespace JidamVision4.Core
         public void DelInspWindow(List<InspWindow> inspWindowList)
         {
             _model.DelInspWindowList(inspWindowList);
+            foreach (var g in inspWindowList.Where(w => w != null).GroupBy(w => w.InspWindowType))
+                NormalizeWindowNamesForType(g.Key);                             // ★ 재정렬
             UpdateDiagramEntity();
         }
 
@@ -664,6 +736,10 @@ namespace JidamVision4.Core
             {
                 Global.Inst.InspStage.SetImageBuffer(inspImagePath);
             }
+
+            // 로드 직후 한 번 전체 정리(기존 모델 호환)
+            foreach (InspWindowType t in Enum.GetValues(typeof(InspWindowType)))
+                if (t != InspWindowType.None) NormalizeWindowNamesForType(t);
 
             UpdateDiagramEntity();
 
