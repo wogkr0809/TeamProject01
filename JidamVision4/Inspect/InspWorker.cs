@@ -111,7 +111,8 @@ namespace JidamVision4.Inspect
             }
             Global.Inst.InspStage.AddAccumCount(1, isDefect ? 0 : 1, isDefect ? 1 : 0);
             // 활성 ROI 리스트: active
-            
+            // ★ ROI별 NG 누적 (각 ROI가 NG면 해당 카테고리에 +1)
+            Global.Inst.InspStage.NgCounter.AddFromWindows(active);
             return true;
 
         }

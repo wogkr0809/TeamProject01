@@ -50,8 +50,18 @@ namespace JidamVision4.Core
         public void Add(int total, int ok, int ng)
         { Total += total; OK += ok; NG += ng; }
     }
+    
     public class InspStage : IDisposable
     {
+        public NgCategoryCounter NgCounter { get; } = new NgCategoryCounter();
+
+        public event Action<IReadOnlyDictionary<string, long>> CategoryChanged
+        {
+            add { NgCounter.Changed += value; }
+            remove { NgCounter.Changed -= value; }
+        }
+
+        public void ResetCategory() => NgCounter.Reset();
 
         public AccumCounter Accum { get; } = new AccumCounter();
         public event Action<AccumCounter> AccumChanged;
@@ -62,6 +72,7 @@ namespace JidamVision4.Core
 
         //#5_CAMERA_INTERFACE#4 Dispose도 GrabModel에서 상속받아 사용
         //private HikRobotCam _grabManager = null;
+
         private GrabModel _grabManager = null;
         private CameraType _camType = CameraType.WebCam;
 
