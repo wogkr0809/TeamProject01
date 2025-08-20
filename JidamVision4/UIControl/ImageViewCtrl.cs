@@ -54,6 +54,11 @@ namespace JidamVision4.UIControl
     public partial class ImageViewCtrl: UserControl
     {
 
+        // --- Right-Drag Pan ---
+        private bool _isPanning = false;
+        private System.Drawing.Point _panStart; // 화면좌표
+        private bool _didPan = false;           // 드래그로 실제 이동했는지(컨텍스트 메뉴 방지)
+
         public event Action<System.Drawing.Point?> MouseImageMoved; // 이미지 좌표(이미지 밖이면 null)
         public event Action MouseImageLeaved;
 
@@ -749,6 +754,14 @@ namespace JidamVision4.UIControl
 
         protected override void OnMouseLeave(EventArgs e)
         {
+
+            // 마우스가 컨트롤 밖으로 나가면 패닝 상태 종료 + 커서 원복
+            if (_isPanning)
+            {
+                _isPanning = false;
+                this.Cursor = Cursors.Default;
+            }
+
             MouseImageLeaved?.Invoke();
             base.OnMouseLeave(e);
         }
@@ -772,12 +785,25 @@ namespace JidamVision4.UIControl
         {
             _isCtrlPressed = (ModifierKeys & Keys.Control) == Keys.Control;
 
+            // ===== Right-Drag Pan 시작 =====
+            if (e.Button == MouseButtons.Right
+                && _toolMode != ToolMode.Measure                // 길이측정 중 제외
+                && !_isSelectingRoi && !_isResizingRoi && !_isMovingRoi) // ROI 편집 중 제외
+            {
+                _isPanning = true;
+                _didPan = false;
+                _panStart = e.Location;
+                this.Cursor = Cursors.Hand;   // 손모양
+                Focus();                      // 휠/키 입력 포커스
+                return;                       // 아래 ROI 로직으로 안 내려감
+            }
+
             //여러개 ROI 기능에 맞게 코드 수정
             if (e.Button == MouseButtons.Left)
             {
                 if (_newRoiType != InspWindowType.None)
                 {
-                    //새로운 ROI 그리기 시작 위치 설저어
+                    //새로운 ROI 그리기 시작 위치 설정
                     _roiStart = e.Location;
                     _isSelectingRoi = true;
                     _selEntity = null;
@@ -861,6 +887,26 @@ namespace JidamVision4.UIControl
 
         private void ImageViewCtrl_MouseMove(object sender, MouseEventArgs e)
         {
+
+            // ===== Right-Drag Pan 진행 =====
+            if (_isPanning)
+            {
+                int dx = e.X - _panStart.X;
+                int dy = e.Y - _panStart.Y;
+
+                if (dx != 0 || dy != 0)
+                {
+                    _didPan = true;
+                    // 이미지가 그려지는 사각형 위치 이동
+                    ImageRect.X += dx;
+                    ImageRect.Y += dy;
+
+                    _panStart = e.Location;
+                    Invalidate();
+                }
+                return; // ROI/기타 로직과 충돌 방지
+            }
+
             _mousePos = e.Location;
 
             //마우스 이동시, 구현 코드
@@ -956,6 +1002,18 @@ namespace JidamVision4.UIControl
 
         private void ImageViewCtrl_MouseUp(object sender, MouseEventArgs e)
         {
+
+            // ===== Right-Drag Pan 종료 =====
+            if (_isPanning && e.Button == MouseButtons.Right)
+            {
+                _isPanning = false;
+                this.Cursor = Cursors.Default;
+
+                // 드래그로 실제 이동했다면 여기서 종료(컨텍스트 메뉴 차단)
+                if (_didPan) { _didPan = false; return; }
+                // 이동이 거의 없었으면 아래 기존 우클릭 처리로 진행
+            }
+
             //ROI 크기 변경 또는 이동 완료            
             if (e.Button == MouseButtons.Left)
             {
@@ -1483,11 +1541,15 @@ namespace JidamVision4.UIControl
 
         protected override void OnKeyUp(KeyEventArgs e)
         {
+
+
             if (e.KeyCode == Keys.Control)
                 _isCtrlPressed = false;
 
             base.OnKeyUp(e);
         }
+
+
 
         public void ResetEntity()
         {
