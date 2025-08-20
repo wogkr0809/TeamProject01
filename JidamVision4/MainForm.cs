@@ -148,6 +148,10 @@ namespace JidamVision4
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            SLogger.Write($"모델 닫기 안내");
+            SaveGuide saveGuide = new SaveGuide();
+            saveGuide.StartPosition = FormStartPosition.CenterScreen;
+            saveGuide.ShowDialog();
             Global.Inst.Dispose();
         }
 

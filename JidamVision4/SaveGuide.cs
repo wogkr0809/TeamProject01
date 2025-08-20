@@ -45,12 +45,13 @@ namespace JidamVision4
             }
 
             //여기에서 모델 닫는 기능 함수(ModelCloser)를 호출하면 될 것 같음
-
+            this.Close(); // 폼 닫기
         }
 
         private void btnNo_Click(object sender, EventArgs e)
         {
             //여기에서 모델 닫는 기능 함수(ModelCloser)를 호출하면 될 것 같음
+            this.Close(); // 폼 닫기
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
