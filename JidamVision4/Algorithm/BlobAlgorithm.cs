@@ -79,8 +79,14 @@ namespace JidamVision4.Algorithm
         public readonly int FILTER_HEIGHT = 2;
         public readonly int FILTER_COUNT = 3;
 
-        //이진화 필터로 찾은 영역
-        private List<DrawInspectInfo> _findArea;
+        ////이진화 필터로 찾은 영역
+        //private List<DrawInspectInfo> _findArea;
+        private List<DrawInspectInfo> _findArea = new List<DrawInspectInfo>();
+
+        // ResultString 도 마찬가지
+        public List<string> ResultString { get; private set; } = new List<string>();
+
+
         public BinaryMethod BinMethod { get; set; } = BinaryMethod.Feature;
         //검사로 찾은 영역을 최외곽박스로 표시할 지 여부
         public bool UseRotatedRect { get; set; } = false;
@@ -214,46 +220,45 @@ namespace JidamVision4.Algorithm
         //검사 영역에서 백색 픽셀의 갯수로 OK/NG 여부만 판단
         private bool InspPixelCount(Mat binImage)
         {
-            if (binImage.Empty() || binImage.Type() != MatType.CV_8UC1)
+            if (binImage == null || binImage.Empty())
+                return false;
+            if (binImage.Type() != MatType.CV_8UC1)
                 return false;
 
-            // 흰색 픽셀(255)의 총 개수 계산
+            if (_findArea == null) _findArea = new List<DrawInspectInfo>();
+            _findArea.Clear();
+            if (ResultString == null) ResultString = new List<string>();
+            ResultString.Clear();
+
             int pixelCount = Cv2.CountNonZero(binImage);
 
-            _findArea.Clear();
-
             IsDefect = false;
-            string result = "OK";
-
             string featureInfo = $"A:{pixelCount}";
 
-            BlobFilter areaFilter = BlobFilters[FILTER_AREA];
-            if (areaFilter.isUse)
+            // 🔴 여기만 인덱스로 교체
+            BlobFilter areaFilter = null;
+            if (BlobFilters != null && FILTER_AREA >= 0 && FILTER_AREA < BlobFilters.Count)
+                areaFilter = BlobFilters[FILTER_AREA];
+
+            if (areaFilter != null && areaFilter.isUse)
             {
                 if ((areaFilter.min > 0 && pixelCount < areaFilter.min) ||
                     (areaFilter.max > 0 && pixelCount > areaFilter.max))
                 {
                     IsDefect = true;
-                    result = "NG";
                 }
             }
 
-            Rect blobRect = new Rect(InspRect.Left, InspRect.Top, binImage.Width, binImage.Height);
+            var blobRect = new Rect(InspRect.Left, InspRect.Top, binImage.Width, binImage.Height);
+            ResultString.Add($"Blob X:{blobRect.X}, Y:{blobRect.Y}, Size({blobRect.Width},{blobRect.Height})");
 
-            string blobInfo;
-            blobInfo = $"Blob X:{blobRect.X}, Y:{blobRect.Y}, Size({blobRect.Width},{blobRect.Height})";
-            ResultString.Add(blobInfo);
-
-            DrawInspectInfo rectInfo = new DrawInspectInfo(blobRect, featureInfo, InspectType.InspBinary, DecisionType.Info);
-            _findArea.Add(rectInfo);
-
+            _findArea.Add(new DrawInspectInfo(blobRect, featureInfo, InspectType.InspBinary, DecisionType.Info));
             OutBlobCount = 1;
 
-            if (IsDefect)
+            if (areaFilter != null)
             {
-                string resultInfo = "";
-                resultInfo = $"[{result}] Blob count [in : {areaFilter.min},{areaFilter.max},out : {pixelCount}]";
-                ResultString.Add(resultInfo);
+                string ngok = IsDefect ? "NG" : "OK";
+                ResultString.Add($"[{ngok}] Blob count [in:{areaFilter.min},{areaFilter.max}, out:{pixelCount}]");
             }
 
             return true;

@@ -142,7 +142,8 @@ namespace JidamVision4
             if (curModel is null)
                 return;
 
-            _treeListView.SetObjects(curModel.InspWindowList);
+            _treeListView.SetObjects(curModel.InspWindowList?.Where(w => w != null).ToList()
+                         ?? new List<InspWindow>());
 
             foreach (var window in curModel.InspWindowList)
             {
