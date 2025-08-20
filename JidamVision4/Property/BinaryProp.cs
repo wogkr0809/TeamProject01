@@ -114,8 +114,8 @@ namespace JidamVision4.Property
 
             // 항목 추가
             AddFilterRow("Area");
-            AddFilterRow("Length");
             AddFilterRow("Width");
+            AddFilterRow("Height");
             AddFilterRow("Count");
 
             dataGridViewFilter.AllowUserToAddRows = false;
