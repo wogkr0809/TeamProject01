@@ -22,6 +22,12 @@ namespace JidamVision4
     //public partial class CameraForm: Form
     public partial class CameraForm : DockContent
     {
+
+        // === 커서 정보 바 ===
+        private Panel _cursorBar;
+        private Label _lblXY;
+        private Label _lblPix;
+
         //보드 길이 측정 #16
         public JidamVision4.UIControl.ImageViewCtrl GetImageView()
         {
@@ -41,6 +47,39 @@ namespace JidamVision4
         public CameraForm()
         {
             InitializeComponent();
+            this.Resize += CameraForm_Resize;
+
+            _cursorBar = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 26,
+                BackColor = Color.FromArgb(245, 245, 245) // 밝은 회색
+            };
+            _lblXY = new Label
+            {
+                AutoSize = false,
+                Dock = DockStyle.Left,
+                Width = 180,
+                Text = "X: -, Y: -",
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0)
+            };
+            _lblPix = new Label
+            {
+                AutoSize = false,
+                Dock = DockStyle.Fill,
+                Text = "Gray/RGB: -",
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(8, 0, 0, 0)
+            };
+            _cursorBar.Controls.Add(_lblPix);
+            _cursorBar.Controls.Add(_lblXY);
+            Controls.Add(_cursorBar);
+
+            // ===== ImageViewCtrl 이벤트 구독 =====
+            imageViewer.MouseImageMoved += ImageViewer_MouseImageMoved;
+            imageViewer.MouseImageLeaved += ImageViewer_MouseImageLeaved;
+
 
 
             this.FormClosed += CameraForm_FormClosed;
@@ -115,12 +154,80 @@ namespace JidamVision4
         {
             //#18_IMAGE_CHANNEL#4 메인툴바 너비를 제외하고 이미지 뷰어의 크기를 조정
 
-            int margin = 0;
-            imageViewer.Width = this.Width - mainViewToolbar.Width - margin * 2;
-            imageViewer.Height = this.Height - margin * 2;
+            //int margin = 0;
+            //imageViewer.Width = this.Width - mainViewToolbar.Width - margin * 2;
+            //imageViewer.Height = this.Height - margin * 2;
+            //imageViewer.Location = new System.Drawing.Point(margin, margin);
 
+            int margin = 0;
+            int barH = (_cursorBar != null) ? _cursorBar.Height : 0;
+
+            imageViewer.Width = this.Width - mainViewToolbar.Width - margin * 2;
+            imageViewer.Height = this.Height - margin * 2 - barH; // ← barH 사용
             imageViewer.Location = new System.Drawing.Point(margin, margin);
         }
+
+        private void SetCursorInfo(string xy, string pix)
+        {
+            if (_lblXY != null) _lblXY.Text = xy;
+            if (_lblPix != null) _lblPix.Text = pix;
+        }
+
+        private void ImageViewer_MouseImageMoved(System.Drawing.Point? imgPt)
+        {
+            if (imgPt == null)
+            {
+                SetCursorInfo("X: -, Y: -", "Gray/RGB: -");
+                return;
+            }
+
+            var p = imgPt.Value;
+
+            var bmp = Global.Inst.InspStage.GetBitmap(
+                          Global.Inst.InspStage.SelBufferIndex, eImageChannel.None);
+            if (bmp == null || p.X < 0 || p.Y < 0 || p.X >= bmp.Width || p.Y >= bmp.Height)
+            {
+                SetCursorInfo("X: -, Y: -", "Gray/RGB: -");
+                return;
+            }
+
+            string xy = $"X: {p.X}, Y: {p.Y}";
+
+            var pix = bmp.GetPixel(p.X, p.Y);
+
+            // ★ 현재 선택 채널 기준으로 표기(정확)
+            string pv;
+            if (_currentImageChannel == eImageChannel.Gray)
+            {
+                // 그레이 채널이면 R=G=B 형태일 가능성 높음 → 하나만 표시
+                pv = $"Gray: {pix.R}";
+            }
+            else if (_currentImageChannel == eImageChannel.Red)
+            {
+                pv = $"R: {pix.R}";
+            }
+            else if (_currentImageChannel == eImageChannel.Green)
+            {
+                pv = $"G: {pix.G}";
+            }
+            else if (_currentImageChannel == eImageChannel.Blue)
+            {
+                pv = $"B: {pix.B}";
+            }
+            else // Color
+            {
+                pv = $"R: {pix.R}, G: {pix.G}, B: {pix.B}";
+            }
+
+            SetCursorInfo(xy, pv);
+        }
+
+        private void ImageViewer_MouseImageLeaved()
+        {
+            SetCursorInfo("X: -, Y: -", "Gray/RGB: -");
+        }
+
+
 
         public void UpdateDisplay(Bitmap bitmap = null)
         {
@@ -221,7 +328,7 @@ namespace JidamVision4
             imageViewer.WorkingState = state;
             imageViewer.Invalidate();
         }
-        
+
         //#18_IMAGE_CHANNEL#2 메인툴바의 버튼 이벤트를 처리하는 함수
         private void Toolbar_ButtonChanged(object sender, ToolbarEventArgs e)
         {
@@ -264,11 +371,18 @@ namespace JidamVision4
 
         private void CameraForm_FormClosed(object sender, FormClosedEventArgs e)
         {
+            //mainViewToolbar.ButtonChanged -= Toolbar_ButtonChanged;
+            //imageViewer.DiagramEntityEvent -= ImageViewer_DiagramEntityEvent;
+            //this.FormClosed -= CameraForm_FormClosed;
+
+            imageViewer.MouseImageMoved -= ImageViewer_MouseImageMoved;
+            imageViewer.MouseImageLeaved -= ImageViewer_MouseImageLeaved;
+
             mainViewToolbar.ButtonChanged -= Toolbar_ButtonChanged;
-
             imageViewer.DiagramEntityEvent -= ImageViewer_DiagramEntityEvent;
-
             this.FormClosed -= CameraForm_FormClosed;
+
+            this.Resize -= CameraForm_Resize; // ← 추가(권장)
         }
 
         public void SwitchToCurrentModel()
@@ -281,7 +395,7 @@ namespace JidamVision4
             MainForm.GetDockForm<ResultForm>().ClearResults();
         }
 
-        
+
 
     }
 }

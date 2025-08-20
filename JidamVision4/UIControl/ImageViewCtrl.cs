@@ -53,6 +53,10 @@ namespace JidamVision4.UIControl
 
     public partial class ImageViewCtrl: UserControl
     {
+
+        public event Action<System.Drawing.Point?> MouseImageMoved; // 이미지 좌표(이미지 밖이면 null)
+        public event Action MouseImageLeaved;
+
         //ROI를 추가,수정,삭제 등으로 변경 시, 이벤트 발생
         public event EventHandler<DiagramEntityEventArgs> DiagramEntityEvent;
 
@@ -725,7 +729,28 @@ namespace JidamVision4.UIControl
                 }
                 return;
             }
+
+            // === 화면좌표 → 이미지좌표 ===
+            var pScr = new PointF(e.Location.X, e.Location.Y);
+            var pImgF = ScreenToVirtual(pScr);               // 이미 있는 헬퍼
+            var pImg = new System.Drawing.Point(
+                            (int)Math.Floor(pImgF.X),
+                            (int)Math.Floor(pImgF.Y));
+
+            bool inside = (_bitmapImage != null &&
+                           pImg.X >= 0 && pImg.Y >= 0 &&
+                           pImg.X < _bitmapImage.Width &&
+                           pImg.Y < _bitmapImage.Height);
+
+            MouseImageMoved?.Invoke(inside ? pImg : (System.Drawing.Point?)null);
+
             base.OnMouseMove(e);
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            MouseImageLeaved?.Invoke();
+            base.OnMouseLeave(e);
         }
 
         //보드 길이 측정 #11
