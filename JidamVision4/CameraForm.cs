@@ -143,6 +143,9 @@ namespace JidamVision4
             //picMainview.Image = Image.FromFile(filePath);
             Image bitmap = Image.FromFile(filePath);
             imageViewer.LoadBitmap((Bitmap)bitmap);
+
+            // ★ 추가: PDF에서 파일명 출력용으로 경로 기억
+            Global.Inst.InspStage.CurModel.InspectImagePath = filePath;
         }
 
         public Mat GetDisplayImage()
