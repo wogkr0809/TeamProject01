@@ -24,7 +24,7 @@ namespace JidamVision4.Teach
 
     public class InspWindow
     {
-
+        public bool DoInspectAll() => DoInpsect(InspectType.InspNone);
         public InspWindowType InspWindowType { get; set; }
 
         public string Name { get; set; }
@@ -38,6 +38,7 @@ namespace JidamVision4.Teach
 
         //#12_MODEL SAVE#5 Xml Serialize를 위해서, Element을 명확하게 알려줘야 함        
         [XmlElement("InspAlgorithm")]
+       
         public List<InspAlgorithm> AlgorithmList { get; set; } = new List<InspAlgorithm>();
 
         //#13_INSP_RESULT#1 검사 결과를 저장하기 위한 리스트
@@ -167,6 +168,10 @@ namespace JidamVision4.Teach
                 case InspectType.InspMatch:
                     inspAlgo = new MatchAlgorithm();
                     break;
+
+                case InspectType.InspSurfaceDefect:
+                    inspAlgo = new SurfaceDefectAlgorithm();
+                    break;
             }
 
             if (inspAlgo is null)
@@ -218,12 +223,6 @@ namespace JidamVision4.Teach
             return true;
         }
 
-        public bool SetInspOffset(OpenCvSharp.Point offset)
-        {
-            InspArea = WindowArea + offset;
-            AlgorithmList.ForEach(algo => algo.InspRect = algo.TeachRect + offset);
-            return true;
-        }
 
         //#12_MODEL SAVE#1 InspWindow가 가지고 있는 이미지를 모델 폴더에 저장과 로딩
         public virtual bool SaveInspWindow(Model curModel)

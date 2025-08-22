@@ -5,17 +5,27 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JidamVision4.Core;
+using CvPoint = OpenCvSharp.Point;
+using CvPoint2f = OpenCvSharp.Point2f;
+using CvRect = OpenCvSharp.Rect;
+using SDColor = System.Drawing.Color;
 
 namespace JidamVision4.Algorithm
 {
     public class DrawInspectInfo
     {
         public Rect rect;
-        public Point2f[] rotatedPoints;
+        public Point[] rotatedPoints;
         public string info;
         public InspectType inspectType;
         public DecisionType decision;
+
         public bool UseRotatedRect = false; // 회전된 Rect를 사용할지 여부
+
+        public System.Drawing.Color color = System.Drawing.Color.LimeGreen; 
+
+        public string Label { get => info; set => info = value; }
+        public string NgReason { get => info; set => info = value; }
 
         public DrawInspectInfo()
         {
@@ -34,16 +44,16 @@ namespace JidamVision4.Algorithm
             decision = _decision;
         }
 
-        public void SetRotatedRectPoints(Point2f[] _rotatedPoints)
+        public void SetRotatedRectPoints(CvPoint2f[] pts)
         {
-            if (_rotatedPoints is null)
-                return;
-
-            rotatedPoints = new Point2f[_rotatedPoints.Length];
-            for (int i = 0; i < _rotatedPoints.Length; i++)
+            if (pts == null || pts.Length == 0)
             {
-                rotatedPoints[i] = _rotatedPoints[i]; // Point2f는 구조체이므로 값 복사됨
+                rotatedPoints = null;
+                UseRotatedRect = false;
+                return;
             }
+            rotatedPoints = Array.ConvertAll(pts,
+                p => new CvPoint((int)Math.Round(p.X), (int)Math.Round(p.Y)));
             UseRotatedRect = true;
         }
     }

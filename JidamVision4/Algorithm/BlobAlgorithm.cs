@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using JidamVision4.Core;
 
+
 namespace JidamVision4.Algorithm
 {
     /*
@@ -69,6 +70,7 @@ namespace JidamVision4.Algorithm
 
     public class BlobAlgorithm : InspAlgorithm
     {
+
         public BinaryThreshold BinThreshold { get; set; } = new BinaryThreshold();
 
         //#8_INSPECT_BINARY#5 Blob Features 검사를 위한 변수 추가
@@ -85,7 +87,6 @@ namespace JidamVision4.Algorithm
 
         // ResultString 도 마찬가지
         public List<string> ResultString { get; private set; } = new List<string>();
-
 
         public BinaryMethod BinMethod { get; set; } = BinaryMethod.Feature;
         //검사로 찾은 영역을 최외곽박스로 표시할 지 여부
@@ -270,7 +271,7 @@ namespace JidamVision4.Algorithm
             // 컨투어 찾기
             Point[][] contours;
             HierarchyIndex[] hierarchy;
-            Cv2.FindContours(binImage, out contours, out hierarchy, RetrievalModes.External, ContourApproximationModes.ApproxSimple);
+            Cv2.FindContours(binImage, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxSimple);
 
             // 필터링된 객체를 담을 리스트
             Mat filteredImage = Mat.Zeros(binImage.Size(), MatType.CV_8UC1);
@@ -293,6 +294,7 @@ namespace JidamVision4.Algorithm
                 int showHeight = 0;
 
                 BlobFilter areaFilter = BlobFilters[FILTER_AREA];
+
 
                 if (areaFilter.isUse)
                 {

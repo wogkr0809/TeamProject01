@@ -164,14 +164,30 @@ namespace JidamVision4.Inspect
 
             inspWindow.PatternLearn();
 
+
             foreach (var inspAlgo in inspWindow.AlgorithmList)
             {
-                //검사 영역 초기화
+                // 1) 검사 영역 초기화
                 inspAlgo.TeachRect = windowArea;
                 inspAlgo.InspRect = windowArea;
-
+                // 2) 원본 소스 전달(채널별)
                 Mat srcImage = Global.Inst.InspStage.GetMat(0, inspAlgo.ImageChannel);
+                if (srcImage == null || srcImage.Empty())
+                    continue;
                 inspAlgo.SetInspData(srcImage);
+
+                var surf = inspAlgo as JidamVision4.Algorithm.SurfaceDefectAlgorithm;
+                if (surf != null)
+                {
+                    var model = Global.Inst.InspStage.CurModel;
+                    var others = model.InspWindowList
+                                      .Where(w => w != null && !ReferenceEquals(w, inspWindow))
+                                      .Select(w => w.WindowArea)
+                                      .ToList();
+
+                   
+                   
+                }
             }
 
             return true;

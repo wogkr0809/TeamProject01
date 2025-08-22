@@ -35,8 +35,8 @@ namespace JidamVision4.Property
         //양방향 슬라이더 값 변경시 발생하는 이벤트
         public event EventHandler<RangeChangedEventArgs> RangeChanged;
 
-        BlobAlgorithm _blobAlgo = null;
-
+        private BlobAlgorithm _blobAlgo;
+        
         // 속성값을 이용하여 이진화 임계값 설정
         public int LeftValue => binRangeTrackbar.ValueLeft;
         public int RightValue => binRangeTrackbar.ValueRight;
@@ -135,12 +135,25 @@ namespace JidamVision4.Property
         {
             _blobAlgo = blobAlgo;
 
-            //#8_INSPECT_BINARY#10 이진화 알고리즘 필터값이 없을 경우, 기본값 설정
-            if (_blobAlgo.BlobFilters.Count <= 0)
-                blobAlgo.SetDefault();
+            if (_blobAlgo == null)
+            {
+                Enabled = false;               // 컨트롤 비활성화
+                return;
+            }
+            Enabled = true;
 
-            SetProperty();
+            // 필터 컬렉션 널 방어
+            if (_blobAlgo.BlobFilters == null)
+                _blobAlgo.BlobFilters = new List<BlobFilter>();
+
+            // 기본값 세팅
+            if (_blobAlgo.BlobFilters.Count == 0)
+                _blobAlgo.SetDefault();
+
+            // 이후 UI 갱신 코드 …
+            SetProperty(); // (기존에 쓰던 메서드 호출)
         }
+        
 
         //이진화 알고리즘 클래스의 정보를 UI컨트롤러에 적용
         public void SetProperty()

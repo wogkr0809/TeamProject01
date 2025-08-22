@@ -14,7 +14,8 @@ namespace JidamVision4.Core
         InspMatch,
         InspFilter,
         InspAIModule,
-        InspCount
+        InspCount,
+        InspSurfaceDefect
     }
 
     //#10_INSPWINDOW#4 InspWindow 정의

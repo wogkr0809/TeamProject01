@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JidamVision4.Algorithm;
 
 namespace JidamVision4.Teach
 {
@@ -71,14 +72,23 @@ namespace JidamVision4.Teach
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
                     break;
                 case InspWindowType.Scratch:
-                    inspWindow.AddInspAlgorithm(InspectType.InspMatch);
-                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
-                    break;
                 case InspWindowType.Soldering:
+                    // 1) 매칭은 동일
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     inspWindow.AddInspAlgorithm(InspectType.InspBinary);
-                    break;
-                //#15_INSP_WORKER#4 InspWindowType.ID추가, 보정을 위해 패턴매칭만 추가
+
+                    // 2) 기존 Binary(Blob) 제거
+                    if (inspWindow.AlgorithmList != null)
+                        inspWindow.AlgorithmList.RemoveAll(a => a.InspectType == InspectType.InspBinary);
+
+                    // 3) SurfaceDefectAlgorithm 추가 (Scratch/Soldering 스위치 기본값 설정)
+                    var surf = new SurfaceDefectAlgorithm
+                    {
+                        EnableScratch = (inspWindow.InspWindowType == InspWindowType.Scratch),
+                        EnableSolder = (inspWindow.InspWindowType == InspWindowType.Soldering)
+                    };
+                    inspWindow.AlgorithmList.Add(surf);
+                    break; 
                 case InspWindowType.ID:
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     break;
@@ -95,29 +105,17 @@ namespace JidamVision4.Teach
             switch (windowType)
             {
                 case InspWindowType.Chip:
-                    name = "Chip";
-                    prefix = "Chip";
-                    break;
+                    name = "Chip"; prefix = "Chip"; break;
                 case InspWindowType.lead:
-                    name = "lead";
-                    prefix = "lead";
-                    break;
+                    name = "lead"; prefix = "lead"; break;
                 case InspWindowType.Resistance:
-                    name = "Resistance";
-                    prefix = "Resistance";
-                    break;
+                    name = "Resistance"; prefix = "Resistance"; break;
                 case InspWindowType.Scratch:
-                    name = " Scratch";
-                    prefix = " Scratch";
-                    break;
+                    name = "Scratch"; prefix = "Scratch"; break;
                 case InspWindowType.Soldering:
-                    name = " Soldering";
-                    prefix = " Soldering";
-                    break;
+                    name = "Soldering"; prefix = "Soldering"; break;
                 case InspWindowType.ID:
-                    name = "ID";
-                    prefix = "ID";
-                    break;
+                    name = "ID"; prefix = "ID"; break;
                 default:
                     return false;
             }
