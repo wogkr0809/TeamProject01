@@ -311,6 +311,12 @@ namespace JidamVision4.Core
 
             Mat matImage = Cv2.ImRead(filePath);
 
+            if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+            {
+                CurrentImagePath = filePath;
+                if (CurModel != null) CurModel.InspectImagePath = filePath;
+            }
+
             int pixelBpp = 8;
             int imageWidth;
             int imageHeight;
@@ -600,6 +606,8 @@ namespace JidamVision4.Core
         //영상 취득 완료 이벤트 발생시 후처리
         private async void _multiGrab_TransferCompleted(object sender, object e)
         {
+            CurrentImagePath = null;
+
             int bufferIndex = (int)e;
             SLogger.Write($"TransferCompleted {bufferIndex}");
 
@@ -858,12 +866,13 @@ namespace JidamVision4.Core
             if (imagePath == "")
                 return false;
 
+            // ★ 경로 갱신
+            CurrentImagePath = imagePath;
+            if (CurModel != null) CurModel.InspectImagePath = imagePath;
+
             Global.Inst.InspStage.SetImageBuffer(imagePath);
-
             _imageSpace.Split(0);
-
             DisplayGrabImage(0);
-
             return true;
         }
 
@@ -983,6 +992,10 @@ namespace JidamVision4.Core
             Accum.Add(total, ok, ng);
             AccumChanged?.Invoke(Accum);
         }
+
+        // InspStage 클래스 필드/프로퍼티 구역
+        public string CurrentImagePath { get; private set; } = null;
+
         #region Disposable
 
         private bool disposed = false; // to detect redundant calls
