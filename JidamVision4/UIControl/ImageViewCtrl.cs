@@ -7,11 +7,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Drawing.Drawing2D;
+using System.Drawing.Drawing2D; // (화살표용)
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 
 namespace JidamVision4.UIControl
@@ -136,16 +137,49 @@ namespace JidamVision4.UIControl
         //ROI숨기기 기능을 위한 변수 선언
         private readonly HashSet<InspWindow> _hiddenWindows = new HashSet<InspWindow>();
 
+
+        private float _zoom = 1.0f;                 // 1.0 = 100%
+        private PointF _pan = new PointF(0f, 0f);   // 화면 기준 오프셋
+
+        public float ZoomScale => Math.Max(0.01f, _zoom);
+
+        // (선택) 컨트롤 내부에서 줌/팬을 바꿀 때 호출해 쓰세요.
+        public void SetZoomInternal(float scale)
+        {
+            _zoom = Math.Max(0.01f, scale);
+            Invalidate();
+        }
+        public void SetPanInternal(PointF pan)
+        {
+            _pan = pan;
+            Invalidate();
+        }
+
+        // 이미지좌표 -> 뷰좌표
+        public PointF ImageToView(PointF p)
+        {
+            return new PointF(p.X * _zoom + _pan.X,
+                              p.Y * _zoom + _pan.Y);
+        }
+
+        // 뷰좌표 -> 이미지좌표
+        public PointF ViewToImage(PointF v)
+        {
+            return new PointF((v.X - _pan.X) / _zoom,
+                              (v.Y - _pan.Y) / _zoom);
+        }
+
         //보드 길이 측정 #2
         public enum ToolMode { None, Measure }
 
         //보드 길이 측정 #3
         private ToolMode _toolMode = ToolMode.None;
-        private Point? _measureP1 = null;   // 첫 클릭
-        private Point? _measureP2 = null;   // 두 번째 클릭/드래그
 
-        //보드 길이 측정 #3-1
-        private bool _measureLocked = false;   // 두 번째 클릭 후 true로 잠금
+        // 이미지 좌표 저장으로 변경
+        private PointF? _measureP1 = null;   // 첫 클릭 (img)
+        private PointF? _measureP2 = null;   // 두 번째/드래그 (img)
+
+        private bool _measureLocked = false; // 두 번째 클릭 후 true
 
         //보드 길이 측정 #4
         public struct MeasurementResult
@@ -180,21 +214,18 @@ namespace JidamVision4.UIControl
         {
             if (_measureP1 == null || _measureP2 == null) return;
 
-            var p1 = _measureP1.Value;
+            var p1 = _measureP1.Value; // 이미지 좌표
             var p2 = _measureP2.Value;
 
             double dx = p2.X - p1.X, dy = p2.Y - p1.Y;
-            double distPx = Math.Sqrt(dx * dx + dy * dy);
-
-            double ppm = SettingXml.Inst.PixelPerMM; // px/mm
-            double distMM = (ppm > 0) ? distPx / ppm : 0.0;
+            double distPx = Math.Sqrt(dx * dx + dy * dy); // 원본 픽셀 거리(D)
 
             _lastMeasurement = new MeasurementResult
             {
-                P1 = p1,
-                P2 = p2,
+                P1 = new Point((int)Math.Round(p1.X), (int)Math.Round(p1.Y)),
+                P2 = new Point((int)Math.Round(p2.X), (int)Math.Round(p2.Y)),
                 DistancePx = distPx,
-                DistanceMM = distMM
+                DistanceMM = 0.0 // 더 이상 사용하지 않음
             };
         }
 
@@ -202,6 +233,61 @@ namespace JidamVision4.UIControl
         private bool _nudgePreviewOn = false;
         private Rectangle _nudgePreviewRect; // 이미지 좌표계
 
+
+        private string BuildMeasureLabel(PointF p1Img, PointF p2Img)
+        {
+            // D = 원본(이미지) 픽셀 거리
+            var dxI = p2Img.X - p1Img.X;
+            var dyI = p2Img.Y - p1Img.Y;
+            double dImagePx = Math.Sqrt(dxI * dxI + dyI * dyI);
+
+            // PX(view) = 현재 줌 반영 화면 픽셀 거리
+            var p1V = ImageToView(p1Img);
+            var p2V = ImageToView(p2Img);
+            var dxV = p2V.X - p1V.X;
+            var dyV = p2V.Y - p1V.Y;
+            double dViewPx = Math.Sqrt(dxV * dxV + dyV * dyV);
+
+            // 단위(px) 표기 추가
+            return $"PX(view): {dViewPx:F1} px\nX: {p2Img.X:F0} px, Y: {p2Img.Y:F0} px\nD: {dImagePx:F1} px";
+        }
+
+        private void DrawLabelBubble(Graphics g, string text, PointF anchorView)
+        {
+            using (var font = new Font("Segoe UI", 9f, FontStyle.Bold))
+            using (var textBrush = new SolidBrush(Color.White))
+            using (var bgBrush = new SolidBrush(Color.FromArgb(200, 0, 0, 0)))
+            using (var pen = new Pen(Color.Lime, 1f))
+            {
+                var size = g.MeasureString(text, font);
+                float pad = 6f;
+                var w = size.Width + pad * 2;
+                var h = size.Height + pad * 2;
+
+                // 끝점 오른쪽 위로 띄워서
+                var rect = new RectangleF(anchorView.X + 10, anchorView.Y - h - 10, w, h);
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.FillRectangle(bgBrush, rect);
+                g.DrawRectangle(pen, rect.X, rect.Y, rect.Width, rect.Height);
+                g.DrawString(text, font, textBrush, rect.X + pad, rect.Y + pad);
+            }
+        }
+
+        private void DrawArrowLine(Graphics g, PointF p1View, PointF p2View, Color color, float width = 2f)
+        {
+            using (var pen = new Pen(color, width))
+            {
+                pen.Alignment = PenAlignment.Center;
+
+                // 꽉 찬 화살촉 (base=7, height=10, filled=true)
+                var arrowCap = new AdjustableArrowCap(7, 10, true);
+                pen.CustomStartCap = arrowCap; // ← 시작점에도 화살표
+                pen.CustomEndCap = arrowCap; // ← 끝점에도 화살표
+
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.DrawLine(pen, p1View, p2View);
+            }
+        }
 
         public ImageViewCtrl()
         {
@@ -400,30 +486,23 @@ namespace JidamVision4.UIControl
                     //보드 길이 측정 #13
                     if (_toolMode == ToolMode.Measure && _measureP1 != null && _measureP2 != null)
                     {
-                        var p1 = _measureP1.Value;
-                        var p2 = _measureP2.Value;
+                        // 이미지 좌표
+                        var p1Img = _measureP1.Value;
+                        var p2Img = _measureP2.Value;
 
-                        using (var pen = new Pen(Color.Lime, 2))
-                        using (var font = new Font("Segoe UI", 9f, FontStyle.Bold))
-                        using (var bg = new SolidBrush(Color.FromArgb(160, 0, 0, 0)))
-                        using (var fg = new SolidBrush(Color.White))
-                        {
-                            g.DrawLine(pen, p1, p2);
-                            g.FillEllipse(Brushes.Yellow, p1.X - 3, p1.Y - 3, 6, 6);
-                            g.FillEllipse(Brushes.Yellow, p2.X - 3, p2.Y - 3, 6, 6);
 
-                            double dx = p2.X - p1.X, dy = p2.Y - p1.Y;
-                            double distPx = Math.Sqrt(dx * dx + dy * dy);
-                            double ppm = SettingXml.Inst.PixelPerMM;
-                            double distMM = (ppm > 0) ? distPx / ppm : 0.0;
+                        // 뷰 좌표 변환
+                        var p1V = ImageToView(p1Img);
+                        var p2V = ImageToView(p2Img);
 
-                            string label = $"{distPx:F1} px / {distMM:F2} mm";
-                            var sz = g.MeasureString(label, font);
-                            var mid = new Point((p1.X + p2.X) / 2, (p1.Y + p2.Y) / 2);
-                            var rect = new RectangleF(mid.X - sz.Width / 2 - 4, mid.Y - sz.Height - 8, sz.Width + 8, sz.Height + 4);
-                            g.FillRectangle(bg, rect);
-                            g.DrawString(label, font, fg, rect.Location);
-                        }
+                        // 1) 선 + 끝점 ‘채워진’ 화살표
+                        DrawArrowLine(g, p1V, p2V, Color.Yellow, 2f);
+
+                        // 2) 라벨(요구 포맷)
+                        string label = BuildMeasureLabel(p1Img, p2Img);
+
+                        // 3) 라벨은 끝점 옆에
+                        DrawLabelBubble(g, label, p2V);
                     }
 
                     // === [ROI Nudge Preview] draw top-most ===
@@ -696,29 +775,30 @@ namespace JidamVision4.UIControl
         {
             if (_toolMode == ToolMode.Measure)
             {
-                if (_measureP1 == null)               // 1st click: 시작
+                var imgPt = ViewToImage(e.Location);  // ★ 변환
+
+                if (_measureP1 == null)               // 1st click
                 {
-                    _measureP1 = e.Location;
-                    _measureP2 = e.Location;
+                    _measureP1 = imgPt;
+                    _measureP2 = imgPt;
                     _measureLocked = false;
                 }
-                else if (!_measureLocked)              // 2nd click: 끝점 고정
+                else if (!_measureLocked)             // 2nd click: 끝점 고정
                 {
-                    _measureP2 = e.Location;
-                    _measureLocked = true;             // ★ 잠금
-                    CommitMeasurement();
+                    _measureP2 = imgPt;
+                    _measureLocked = true;
+                    CommitMeasurement();              // (아래 1-3 수정 반영)
                 }
-                else                                   // 잠금 상태에서 또 클릭: 새 측정 시작
+                else                                  // 잠금 상태에서 또 클릭: 새 시작
                 {
-                    _measureP1 = e.Location;
-                    _measureP2 = e.Location;
+                    _measureP1 = imgPt;
+                    _measureP2 = imgPt;
                     _measureLocked = false;
                 }
 
                 Invalidate();
-                return;                                // ROI 편집 로직으로 안 넘김
+                return; // ROI 편집으로 안 넘김
             }
-
             base.OnMouseDown(e);
         }
 
@@ -727,28 +807,13 @@ namespace JidamVision4.UIControl
         {
             if (_toolMode == ToolMode.Measure)
             {
-                if (_measureP1 != null && !_measureLocked)   // ★ 잠금 해제일 때만 따라다님
+                if (_measureP1 != null && !_measureLocked)
                 {
-                    _measureP2 = e.Location;
+                    _measureP2 = ViewToImage(e.Location); // ★ 변환
                     Invalidate();
                 }
                 return;
             }
-
-            // === 화면좌표 → 이미지좌표 ===
-            var pScr = new PointF(e.Location.X, e.Location.Y);
-            var pImgF = ScreenToVirtual(pScr);               // 이미 있는 헬퍼
-            var pImg = new System.Drawing.Point(
-                            (int)Math.Floor(pImgF.X),
-                            (int)Math.Floor(pImgF.Y));
-
-            bool inside = (_bitmapImage != null &&
-                           pImg.X >= 0 && pImg.Y >= 0 &&
-                           pImg.X < _bitmapImage.Width &&
-                           pImg.Y < _bitmapImage.Height);
-
-            MouseImageMoved?.Invoke(inside ? pImg : (System.Drawing.Point?)null);
-
             base.OnMouseMove(e);
         }
 
@@ -772,7 +837,7 @@ namespace JidamVision4.UIControl
             if (_toolMode == ToolMode.Measure)
             {
                 _measureP1 = _measureP2 = null;
-                _measureLocked = false;                  // ★ 추가
+                _measureLocked = false;
                 Invalidate();
                 return;
             }
