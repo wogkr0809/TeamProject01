@@ -32,6 +32,148 @@ namespace JidamVision4
         private Label _lblXY;
         private Label _lblPix;
 
+
+        private System.Windows.Forms.ToolStripButton _measureBtn;    // 만든 버튼
+        private System.Windows.Forms.ToolStrip _measureHostTS;       // 들어간 ToolStrip
+        private bool _measureInstalled = false;                      // 중복 설치 방지
+
+        // 아이콘: 리소스(icoMeasure) 있으면 사용, 없으면 기본 아이콘
+        private System.Drawing.Image GetMeasureIcon()
+        {
+            return Properties.Resources.ResourceManager.GetObject("icoMeasure") as System.Drawing.Image
+                   ?? System.Drawing.SystemIcons.Information.ToBitmap();
+        }
+
+        // (선택) 외부에서 상태 강제 변경이 필요할 때 호출
+        public void SetMeasureToggle(bool on)
+        {
+            if (_measureBtn != null && _measureBtn.Checked != on)
+                _measureBtn.Checked = on;
+        }
+
+        // 핸들 생성 후 한 번만 설치
+        protected override void OnHandleCreated(System.EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            TryInstallMeasureButton();
+        }
+
+        // Ctrl + D 로 토글 (메뉴 없어도 동작)
+        protected override bool ProcessCmdKey(ref System.Windows.Forms.Message msg, System.Windows.Forms.Keys keyData)
+        {
+            if (keyData == (System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.D))
+            {
+                if (_measureBtn != null) _measureBtn.Checked = !_measureBtn.Checked;
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        // 실제 설치 로직: MainViewToolbar 내부 ToolStrip을 찾아 채널(삼원색) 아이콘 '바로 아래'에 삽입
+        private void TryInstallMeasureButton()
+        {
+            if (_measureInstalled || mainViewToolbar == null) return;
+
+            // 1) MainViewToolbar 자식 트리에서 ToolStrip 찾기
+            var ts = FindChildToolStrip(mainViewToolbar);
+            if (ts == null)
+            {
+                // 정말 ToolStrip이 없다면 폴백으로 하나 생성해서 상단에 붙임
+                ts = new System.Windows.Forms.ToolStrip
+                {
+                    GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden,
+                    Dock = System.Windows.Forms.DockStyle.Top,
+                    RenderMode = System.Windows.Forms.ToolStripRenderMode.System
+                };
+                mainViewToolbar.Controls.Add(ts);
+                ts.BringToFront();
+            }
+
+            // 2) 버튼 생성
+            _measureBtn = new System.Windows.Forms.ToolStripButton
+            {
+                Name = "tsbMeasure",
+                CheckOnClick = true,
+                DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image,
+                Image = GetMeasureIcon(),                                  // ★ 나중에 이미지만 바꿔 끼우면 됨
+                ImageScaling = System.Windows.Forms.ToolStripItemImageScaling.None,
+                ToolTipText = "Distance (Two Points)  (Ctrl+D)",
+                Margin = new System.Windows.Forms.Padding(0, 2, 0, 2),
+                Padding = new System.Windows.Forms.Padding(0)
+            };
+            _measureBtn.CheckedChanged += MeasureBtn_CheckedChanged;
+
+            // 3) 삽입 위치 계산
+            // 3-1) 이름(anchor)로 먼저 찾기: 컬러휠 버튼의 Name이 'tsbChannelColor' 라면 바로 아래
+            int insertIndex = -1;
+            for (int i = 0; i < ts.Items.Count; i++)
+            {
+                if (ts.Items[i].Name == "tsbChannelColor") { insertIndex = i + 1; break; }
+            }
+            // 3-2) 이름을 모르면 ToolTipText의 키워드로 추정(anchor)
+            if (insertIndex < 0)
+            {
+                for (int i = 0; i < ts.Items.Count; i++)
+                {
+                    string tip = ts.Items[i].ToolTipText ?? string.Empty;
+                    tip = tip.ToLowerInvariant();
+                    if (tip.Contains("channel") || tip.Contains("color") || tip.Contains("rgb") || tip.Contains("색") || tip.Contains("채널"))
+                    {
+                        insertIndex = i + 1;
+                        break;
+                    }
+                }
+            }
+            // 3-3) 못 찾으면 맨 끝에 추가
+            if (insertIndex < 0) insertIndex = ts.Items.Count;
+
+            ts.Items.Insert(insertIndex, _measureBtn);
+
+            _measureHostTS = ts;
+            _measureInstalled = true;
+
+            // 4) 폼 정리 시 해제
+            this.Disposed += (s, e) =>
+            {
+                if (_measureBtn != null)
+                {
+                    _measureBtn.CheckedChanged -= MeasureBtn_CheckedChanged;
+                    if (_measureHostTS != null && _measureHostTS.Items.Contains(_measureBtn))
+                        _measureHostTS.Items.Remove(_measureBtn);
+                    _measureBtn.Dispose();
+                    _measureBtn = null;
+                    _measureHostTS = null;
+                }
+            };
+        }
+
+        // 토글 → 측정 모드 ON/OFF
+        private void MeasureBtn_CheckedChanged(object sender, System.EventArgs e)
+        {
+            bool on = _measureBtn != null && _measureBtn.Checked;
+
+            imageViewer.SetToolMode(
+                on
+                ? JidamVision4.UIControl.ImageViewCtrl.ToolMode.Measure
+                : JidamVision4.UIControl.ImageViewCtrl.ToolMode.None
+            );
+            imageViewer.WorkingState = on ? "MEASURE" : "";
+            imageViewer.Invalidate();
+        }
+
+        // 재귀로 ToolStrip 탐색
+        private System.Windows.Forms.ToolStrip FindChildToolStrip(System.Windows.Forms.Control root)
+        {
+            if (root == null) return null;
+            if (root is System.Windows.Forms.ToolStrip t) return t;
+            foreach (System.Windows.Forms.Control c in root.Controls)
+            {
+                var found = FindChildToolStrip(c);
+                if (found != null) return found;
+            }
+            return null;
+        }
+
         //보드 길이 측정 #16
         public JidamVision4.UIControl.ImageViewCtrl GetImageView()
         {
@@ -51,6 +193,8 @@ namespace JidamVision4
         public CameraForm()
         {
             InitializeComponent();
+            TryInstallMeasureButton();   // ← 삼원색 아이콘 바로 아래에 '측정' 토글을 꽂음
+
             this.Resize += CameraForm_Resize;
 
 
