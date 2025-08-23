@@ -9,6 +9,7 @@ using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D; // (화살표용)
 using System.Linq;
+using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -809,11 +810,24 @@ namespace JidamVision4.UIControl
             {
                 if (_measureP1 != null && !_measureLocked)
                 {
-                    _measureP2 = ViewToImage(e.Location); // ★ 변환
+                    _measureP2 = e.Location;
                     Invalidate();
                 }
-                return;
+
+                // ★★★ 측정 중에도 커서 좌표 이벤트를 항상 쏴준다 ★★★
+                var pScr = new PointF(e.Location.X, e.Location.Y);
+                var pImgF = ScreenToVirtual(pScr);
+                var pImg = new System.Drawing.Point((int)Math.Floor(pImgF.X),
+                                                     (int)Math.Floor(pImgF.Y));
+                bool inside = (_bitmapImage != null &&
+                               pImg.X >= 0 && pImg.Y >= 0 &&
+                               pImg.X < _bitmapImage.Width &&
+                               pImg.Y < _bitmapImage.Height);
+                MouseImageMoved?.Invoke(inside ? pImg : (System.Drawing.Point?)null);
+
+                return; // 측정 분기 종료
             }
+            EmitCursorEvent(e.Location);
             base.OnMouseMove(e);
         }
 
@@ -843,6 +857,24 @@ namespace JidamVision4.UIControl
             }
             base.OnMouseDoubleClick(e);
         }
+
+        private void EmitCursorEvent(Point location)
+        {
+            // 화면좌표 → 이미지좌표
+            var pScr = new PointF(location.X, location.Y);
+            var pImgF = ScreenToVirtual(pScr);
+            var pImg = new System.Drawing.Point(
+                            (int)Math.Floor(pImgF.X),
+                            (int)Math.Floor(pImgF.Y));
+
+            bool inside = (_bitmapImage != null &&
+                           pImg.X >= 0 && pImg.Y >= 0 &&
+                           pImg.X < _bitmapImage.Width &&
+                           pImg.Y < _bitmapImage.Height);
+
+            MouseImageMoved?.Invoke(inside ? pImg : (System.Drawing.Point?)null);
+        }
+
 
 
         //#10_INSPWINDOW#19 ROI 편집을 위한 마우스 이벤트
