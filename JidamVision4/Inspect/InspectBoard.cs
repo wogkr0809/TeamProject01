@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using OpenCvSharp;
 
@@ -77,15 +78,20 @@ namespace JidamVision4.Inspect
         {
             if (windowList == null || windowList.Count == 0) return false;
 
-            // 1) ID 매칭으로 오프셋 획득
-            Point alignOffset = new Point(0,0);
+            // 1) ID 윈도우로 정렬 오프셋 계산(순차)
+            Point alignOffset = new Point(0, 0);
             var idWindow = windowList.Find(w => w.InspWindowType == InspWindowType.ID);
             if (idWindow != null)
             {
                 var match = idWindow.FindInspAlgorithm(InspectType.InspMatch) as MatchAlgorithm;
                 if (match != null && match.IsUse)
                 {
-                    if (!InspectWindow(idWindow)) return false;
+                    idWindow.ResetInspResult(); // 결과 초기화 (thread-safe 구현은 패치 2 참고)
+                    foreach (var algo in idWindow.AlgorithmList)
+                    {
+                        if (!algo.IsUse || algo.InspectType != InspectType.InspMatch) continue;
+                        if (!algo.DoInspect()) break; // UI 접근 금지
+                    }
                     if (match.IsInspected)
                     {
                         alignOffset = match.GetOffset();
@@ -95,50 +101,50 @@ namespace JidamVision4.Inspect
                 }
             }
 
-            // 2) 모든 창 검사 (ID는 재검사 스킵)
-            foreach (var win in windowList)
+            // 2) 대상 ROI 준비(ID 제외) + 오프셋 적용(사전 세팅만)
+            var targets = windowList.Where(w => w != null && w != idWindow).ToList();
+            foreach (var win in targets)
             {
-                if (win == idWindow) continue;
-
-                // (권장) 명시적으로 각 알고리즘의 Rect 세팅
                 var inspArea = win.WindowArea;
-                inspArea.X += alignOffset.X; inspArea.Y += alignOffset.Y;
+                inspArea.X += alignOffset.X;
+                inspArea.Y += alignOffset.Y;
 
                 foreach (var algo in win.AlgorithmList)
                 {
-                    algo.TeachRect = win.WindowArea; // 학습 기준 유지
-                    algo.InspRect = inspArea;       // 검사 좌표 보정
-                    var src = Global.Inst.InspStage.GetMat(0, algo.ImageChannel);
-                    algo.SetInspData(src);
+                    // TeachRect/SetInspData는 RunInspect()→UpdateInspData()에서 이미 세팅됨
+                    algo.InspRect = inspArea; // 보정된 검사영역 적용
                 }
-
-                if (!InspectWindow(win)) return false;
             }
 
-            foreach (var win in windowList)
+            // 3) 병렬 검사 (UI 접근 금지)
+            int anyFail = 0;
+            var po = new ParallelOptions
             {
-                if (!InspectWindow(win)) return false;
-            }
+                MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount - 1)
+            };
 
-            // 3) 선택: ROI를 모델에 반영(영구 이동)할지 여부
-            bool commitRoiShift = true; // ← 옵션 플래그
-            if (commitRoiShift && (alignOffset.X != 0 || alignOffset.Y != 0))
+            Parallel.ForEach(targets, po, win =>
             {
-                foreach (var win in windowList)
+                try
                 {
-                    var r = win.WindowArea; // OpenCvSharp.Rect
-                    r.X += alignOffset.X;
-                    r.Y += alignOffset.Y;
-                    win.WindowArea = r;
+                    win.ResetInspResult(); // thread-safe (패치 2 참조)
+                    foreach (var algo in win.AlgorithmList)
+                    {
+                        if (!algo.IsUse) continue;
+                        if (!algo.DoInspect())
+                        {
+                            Interlocked.Exchange(ref anyFail, 1);
+                            break;
+                        }
+                    }
                 }
+                catch
+                {
+                    Interlocked.Exchange(ref anyFail, 1);
+                }
+            });
 
-                // UI 갱신(네 프로젝트에 이미 있는 훅을 사용)
-                // 예: CameraForm.UpdateDiagramEntity() 같은 메서드가 있다면 호출
-                var cam = MainForm.GetDockForm<CameraForm>();
-                cam?.UpdateDiagramEntity(); // 모델 변경을 뷰어로 반영
-            }
-
-            return true;
+            return anyFail == 0;
         }
     }
 }

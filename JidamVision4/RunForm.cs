@@ -18,7 +18,14 @@ namespace JidamVision4
         public RunForm()
         {
             InitializeComponent();
+            this.AcceptButton = btnStart;   // Enter == btnStart 클릭
         }
+        public void StartFromHotkey()
+        {
+            if (!btnStart.Enabled) return;  // 연속 중 재시작 막기
+            btnStart.PerformClick();        // 기존 버튼 경로(비동기) 그대로 사용
+        }
+        
 
         private void btnGrab_Click(object sender, EventArgs e)
         {
@@ -28,20 +35,43 @@ namespace JidamVision4
         }
 
         //#8_INSPECT_BINARY#20 검사 시작 버튼을 디자인창에서 만들고, 검사 함수 호출
-        private void btnStart_Click(object sender, EventArgs e)
+        private async void btnStart_Click(object sender, EventArgs e)
         {
 
-            string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}"; 
+            string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}";
             Global.Inst.InspStage.InspectReady("LOT_NUMBER", serialID);
+
+            // 시작 누르면 일단 Start 비활성화
+            btnStart.Enabled = false;
 
             if (SettingXml.Inst.CamType == Grab.CameraType.None)
             {
                 bool cycleMode = SettingXml.Inst.CycleMode;
-                Global.Inst.InspStage.CycleInspect(cycleMode); // 내부적으로 OneCycle() -> RunInspect() 호출
+
+                if (cycleMode)
+                {
+                    // ✅ 연속 검사: Stop 활성화 유지, Start 비활성화 유지
+                    btnStop.Enabled = true;
+                    Global.Inst.InspStage.CycleInspect(true);   // 내부 워커가 루프 시작하고 바로 리턴
+                }
+                else
+                {
+                    // ✅ 단발 검사: Stop은 항상 비활성
+                    btnStop.Enabled = false;
+
+                    // 단발은 UI 멈춤 방지 차원에서 백그라운드로 1회 실행
+                    await Task.Run(() => Global.Inst.InspStage.CycleInspect(false));
+
+                    // 끝나면 Start만 다시 활성화
+                    btnStart.Enabled = true;
+                }
             }
             else
             {
-                Global.Inst.InspStage.StartAutoRun();
+                // 카메라 자동 런은 연속 검사 취급
+                btnStop.Enabled = true;          // ✅ 연속은 Stop 활성
+                Global.Inst.InspStage.StartAutoRun(); // 내부 시퀀스 시작 후 바로 리턴(비동기 루프)
+                                                      // Start는 연속 동안 비활성 유지
             }
         }
         
@@ -49,7 +79,11 @@ namespace JidamVision4
 
         private void btnStop_Click(object sender, EventArgs e)
         {
-            Global.Inst.InspStage.StopCycle();
+            Global.Inst.InspStage.StopCycle();   // 현재 이미지 끝나면 루프 종료
+
+            // ✅ 정지 누르면 Stop 비활성, Start 활성
+            btnStop.Enabled = false;
+            btnStart.Enabled = true;
         }
 
         //#8_LIVE#3 라이브 모드 버튼 추가

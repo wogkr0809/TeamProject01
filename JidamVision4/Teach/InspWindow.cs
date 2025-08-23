@@ -24,6 +24,8 @@ namespace JidamVision4.Teach
 
     public class InspWindow
     {
+        private readonly object _resultLock = new object();
+        // InspResultList는 기존 필드 그대로 사용
         public bool DoInspectAll() => DoInpsect(InspectType.InspNone);
         public InspWindowType InspWindowType { get; set; }
 
@@ -290,17 +292,20 @@ namespace JidamVision4.Teach
         //#13_INSP_RESULT#2 검사 결과를 초기화 및 추가 함수
         public void ResetInspResult()
         {
-            foreach (var algorithm in AlgorithmList)
+            lock (_resultLock)
             {
-                algorithm.ResetResult();
+                foreach (var algorithm in AlgorithmList)
+                    algorithm.ResetResult();
+                InspResultList.Clear();
             }
-
-            InspResultList.Clear();
         }
 
         public void AddInspResult(InspResult inspResult)
         {
-            InspResultList.Add(inspResult);
+            lock (_resultLock)
+            {
+                InspResultList.Add(inspResult);
+            }
         }
     }
 }

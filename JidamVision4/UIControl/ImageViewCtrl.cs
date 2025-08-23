@@ -1474,7 +1474,7 @@ namespace JidamVision4.UIControl
         //#13_INSP_RESULT#9 키보드 이벤트 받기 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            _isCtrlPressed = keyData == Keys.Control;
+            _isCtrlPressed = (keyData & Keys.Control) == Keys.Control; // 보정
 
             if (keyData == (Keys.Control | Keys.C))
             {
@@ -1486,7 +1486,7 @@ namespace JidamVision4.UIControl
             }
             else
             {
-                switch (keyData)
+                switch (keyData & Keys.KeyCode)
                 {
                     case Keys.Delete:
                         {
@@ -1498,13 +1498,20 @@ namespace JidamVision4.UIControl
                         break;
                     case Keys.Enter:
                         {
-                            InspWindow selWindow = null;
-                            if (_selEntity != null)
-                                selWindow = _selEntity.LinkedWindow;
+                            // A) Dock 환경: MainForm에 GetDockForm<T>()가 있다면 이걸 쓰는 게 가장 정확
+                            var runForm = MainForm.GetDockForm<RunForm>();
 
-                            DiagramEntityEvent?.Invoke(this, new DiagramEntityEventArgs(EntityActionType.Inspect, selWindow));
+                            // B) 백업: OpenForms에서 찾아보기
+                            if (runForm == null)
+                                runForm = Application.OpenForms.OfType<RunForm>().FirstOrDefault();
+
+                            if (runForm != null && runForm.IsHandleCreated)
+                            {
+                                // UI 스레드로 보내서 안전하게 실행
+                                runForm.BeginInvoke((Action)(() => runForm.StartFromHotkey()));
+                            }
+                            return true; // Enter 소비(중복/삑소리 방지)
                         }
-                        break;
                 }
             }
 

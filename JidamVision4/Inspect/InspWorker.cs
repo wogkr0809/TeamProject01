@@ -59,7 +59,7 @@ namespace JidamVision4.Inspect
             {
                 Global.Inst.InspStage.OneCycle();
 
-                //Thread.Sleep(200); // 주기 설정
+                Thread.Sleep(300); // 주기 설정
             }
 
             IsRunning = false;
@@ -103,11 +103,13 @@ namespace JidamVision4.Inspect
             }
 
             var cameraForm = MainForm.GetDockForm<CameraForm>();
-            if (cameraForm != null)
+            if (cameraForm != null && cameraForm.IsHandleCreated)
             {
-                // ★ 항상 호출해서 이전 오버레이를 지워줌(비활성 모두면 빈 리스트 전달)
-                cameraForm.AddRect(allRects);
-                cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
+                cameraForm.BeginInvoke((Action)(() =>
+                {
+                    cameraForm.AddRect(allRects);
+                    cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
+                }));
             }
             Global.Inst.InspStage.AddAccumCount(1, isDefect ? 0 : 1, isDefect ? 1 : 0);
             // 활성 ROI 리스트: active
