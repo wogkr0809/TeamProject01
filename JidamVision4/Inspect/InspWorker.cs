@@ -111,6 +111,16 @@ namespace JidamVision4.Inspect
                     cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
                 }));
             }
+
+            var resultForm = MainForm.GetDockForm<ResultForm>();
+            if (resultForm != null && resultForm.IsHandleCreated)
+            {
+                resultForm.BeginInvoke((Action)(() =>
+                {
+                    resultForm.AddModelResult(curMode);
+                }));
+            }
+
             Global.Inst.InspStage.AddAccumCount(1, isDefect ? 0 : 1, isDefect ? 1 : 0);
             // 활성 ROI 리스트: active
             // ★ ROI별 NG 누적 (각 ROI가 NG면 해당 카테고리에 +1)

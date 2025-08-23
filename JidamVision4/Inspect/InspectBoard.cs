@@ -1,13 +1,14 @@
 ﻿using JidamVision4.Algorithm;
 using JidamVision4.Core;
 using JidamVision4.Teach;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using OpenCvSharp;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace JidamVision4.Inspect
 {
@@ -134,8 +135,18 @@ namespace JidamVision4.Inspect
                         if (!algo.DoInspect())
                         {
                             Interlocked.Exchange(ref anyFail, 1);
-                            break;
+                            return;
                         }
+                        // ★ 여기서 결과를 채운다
+                        var res = new InspResult
+                        {
+                            ObjectID = win.UID,
+                            InspType = algo.InspectType,
+                            IsDefect = algo.IsDefect,
+                            ResultValue = GetResultValue(algo),
+                            ResultInfos = (algo.ResultString != null) ? string.Join("\r\n", algo.ResultString) : null
+                        };
+                        win.AddInspResult(res); // thread-safe 버전
                     }
                 }
                 catch
@@ -145,6 +156,12 @@ namespace JidamVision4.Inspect
             });
 
             return anyFail == 0;
+        }
+        private static string GetResultValue(InspAlgorithm algo)
+        {
+            if (algo is MatchAlgorithm m) return m.OutScore.ToString();
+            if (algo is BlobAlgorithm b) return b.OutBlobCount.ToString(); // 프로젝트 명칭에 맞게
+            return null;
         }
     }
 }

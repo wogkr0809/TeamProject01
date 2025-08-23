@@ -142,12 +142,28 @@ namespace JidamVision4
             if (curModel is null)
                 return;
 
-            _treeListView.SetObjects(curModel.InspWindowList?.Where(w => w != null).ToList()
-                         ?? new List<InspWindow>());
-
-            foreach (var window in curModel.InspWindowList)
+            // ★ UI 스레드 보장
+            if (this.IsHandleCreated && this.InvokeRequired)
             {
-                _treeListView.Expand(window);
+                this.BeginInvoke((Action)(() => AddModelResult(curModel)));
+                return;
+            }
+
+            // 여기부터는 UI 스레드
+            var list = curModel.InspWindowList?
+                            .Where(w => w != null)
+                            .ToList() ?? new List<InspWindow>();
+
+            _treeListView.BeginUpdate();
+            try
+            {
+                _treeListView.SetObjects(list);
+                foreach (var window in list)
+                    _treeListView.Expand(window);
+            }
+            finally
+            {
+                _treeListView.EndUpdate();
             }
         }
 
