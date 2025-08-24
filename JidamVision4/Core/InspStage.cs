@@ -837,7 +837,7 @@ namespace JidamVision4.Core
                     return false;
             }
 
-            ResetDisplay();
+            ResetDisplaySafe();   // ★ 교체
 
             bool isDefect;
             if (!_inspWorker.RunInspect(out isDefect))
@@ -995,6 +995,15 @@ namespace JidamVision4.Core
 
         // InspStage 클래스 필드/프로퍼티 구역
         public string CurrentImagePath { get; private set; } = null;
+
+        private void ResetDisplaySafe()
+        {
+            var cam = MainForm.GetDockForm<CameraForm>();
+            if (cam != null && cam.IsHandleCreated)
+                cam.BeginInvoke((Action)(() => ResetDisplay()));
+            else
+                ResetDisplay();
+        }
 
         #region Disposable
 

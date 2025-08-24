@@ -15,6 +15,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
+using System.Drawing.Imaging;
 
 namespace JidamVision4
 {
@@ -332,43 +333,41 @@ namespace JidamVision4
 
             var p = imgPt.Value;
 
-            var bmp = Global.Inst.InspStage.GetBitmap(
-                          Global.Inst.InspStage.SelBufferIndex, eImageChannel.None);
+            // ─ 1) 좌표는 무조건 먼저 표시 (이벤트가 오는지 바로 확인 가능) ─
+            SetCursorInfo($"X: {p.X}, Y: {p.Y}", "Gray/RGB: ...");
+
+            // ─ 2) 픽셀 소스: 스테이지 → 뷰어(CurrentBitmap) 폴백 ─
+            var bmp = Global.Inst.InspStage?.GetBitmap(
+                          Global.Inst.InspStage.SelBufferIndex, eImageChannel.None)
+                      ?? imageViewer.CurrentBitmap;
+
             if (bmp == null || p.X < 0 || p.Y < 0 || p.X >= bmp.Width || p.Y >= bmp.Height)
             {
-                SetCursorInfo("X: -, Y: -", "Gray/RGB: -");
+                // 좌표는 유지, 픽셀만 초기화
+                SetCursorInfo($"X: {p.X}, Y: {p.Y}", "Gray/RGB: -");
                 return;
             }
 
-            string xy = $"X: {p.X}, Y: {p.Y}";
-
             var pix = bmp.GetPixel(p.X, p.Y);
 
-            // ★ 현재 선택 채널 기준으로 표기(정확)
-            string pv;
-            if (_currentImageChannel == eImageChannel.Gray)
-            {
-                // 그레이 채널이면 R=G=B 형태일 가능성 높음 → 하나만 표시
-                pv = $"Gray: {pix.R}";
-            }
-            else if (_currentImageChannel == eImageChannel.Red)
-            {
-                pv = $"R: {pix.R}";
-            }
-            else if (_currentImageChannel == eImageChannel.Green)
-            {
-                pv = $"G: {pix.G}";
-            }
-            else if (_currentImageChannel == eImageChannel.Blue)
-            {
-                pv = $"B: {pix.B}";
-            }
-            else // Color
-            {
-                pv = $"R: {pix.R}, G: {pix.G}, B: {pix.B}";
-            }
+            bool is8bpp =
+                bmp.PixelFormat == PixelFormat.Format8bppIndexed ||
+                (Image.GetPixelFormatSize(bmp.PixelFormat) == 8 &&
+                 (bmp.PixelFormat & PixelFormat.Indexed) == PixelFormat.Indexed);
 
-            SetCursorInfo(xy, pv);
+            string pv;
+            if (_currentImageChannel == eImageChannel.Gray || is8bpp)
+                pv = $"Gray: {pix.R}";
+            else if (_currentImageChannel == eImageChannel.Red)
+                pv = $"R: {pix.R}";
+            else if (_currentImageChannel == eImageChannel.Green)
+                pv = $"G: {pix.G}";
+            else if (_currentImageChannel == eImageChannel.Blue)
+                pv = $"B: {pix.B}";
+            else
+                pv = $"R: {pix.R}, G: {pix.G}, B: {pix.B}";
+
+            SetCursorInfo($"X: {p.X}, Y: {p.Y}", pv);
         }
 
         private void ImageViewer_MouseImageLeaved()
