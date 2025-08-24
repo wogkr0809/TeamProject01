@@ -37,6 +37,7 @@ namespace JidamVision4
         MetricsView _view;
         DataGridView _catGrid;
         Button _btnReset, _btnExport;
+        int _accTotal, _accOk, _accNg;
         readonly string[] _cats = NgCategoryCounter.Keys;
 
         // CountForm 클래스 내부에 1개만 유지하세요 (맨 위쪽에 두는 걸 권장)
@@ -113,6 +114,12 @@ namespace JidamVision4
         {
             if (InvokeRequired) { BeginInvoke(new Action(() => OnAccumChanged(c))); return; }
             _view.UpdateValues(c.Total, c.OK, c.NG);
+
+            // === [PAGE2 KPI 저장] ===
+            _accTotal = (int)c.Total;
+            _accOk = (int)c.OK;
+            _accNg = (int)c.NG;
+
         }
 
         void OnCategoryChanged(IReadOnlyDictionary<string, long> map)
@@ -289,6 +296,12 @@ namespace JidamVision4
                     }
 
                     doc.Add(bottom);
+
+                    // === [PAGE2: 전체 요약 페이지 추가] ===
+                    doc.NewPage();
+                    var ctx2 = BuildOverallContextForPage2();               // ▼ 바로 아래 4) 메서드 추가
+                    JidamVision4.Reports.OverallReportPage2.Build(doc, ctx2);
+
                     doc.Close();
                 }
             }
@@ -731,5 +744,36 @@ namespace JidamVision4
 
         // 좌측 컬러 이미지 라벨(불량유형) - 헤더 “불량 유형:”과 동일 로직
         private string GetDefectSummaryForImageLabel() => GetDefectSummaryFromGridLabel();
+
+        // === [PAGE2 컨텍스트 만들기] ===
+        private JidamVision4.Reports.OverallReportContext BuildOverallContextForPage2()
+        {
+            var ctx = new JidamVision4.Reports.OverallReportContext();
+            ctx.InspectDate = DateTime.Now;
+
+            // KPI
+            ctx.Total = _accTotal;
+            ctx.Ok = _accOk;
+            ctx.Ng = _accNg;
+
+            // 카테고리 NG 카운트 (그리드에서 읽기)
+            ctx.DefectCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataGridViewRow r in _catGrid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                var name = (r.Cells.Count > 0 && r.Cells[0].Value != null) ? r.Cells[0].Value.ToString() : "";
+                var valS = (r.Cells.Count > 1 && r.Cells[1].Value != null) ? r.Cells[1].Value.ToString() : "0";
+                int v; if (!int.TryParse(valS, out v)) v = 0;
+                if (!string.IsNullOrWhiteSpace(name)) ctx.DefectCounts[name] = v;
+            }
+
+            // 막대그래프/갤러리는 비워두면 내부에서 자동 처리(차트 생성, 슬롯 Placeholder)
+            // 필요 시:
+            // ctx.ModelName = Global.Inst?.InspStage?.CurModel?.Name;
+            // ctx.LineId = "LINE-2"; ctx.EquipmentId = "CAM-01"; ctx.SoftwareVersion = "v4.8";
+
+            return ctx;
+        }
+
     }
 }
