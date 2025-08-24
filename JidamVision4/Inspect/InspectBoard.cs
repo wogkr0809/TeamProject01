@@ -155,7 +155,23 @@ namespace JidamVision4.Inspect
                 }
             });
 
+            if (alignOffset.X != 0 || alignOffset.Y != 0)
+            {
+                foreach (var win in windowList)
+                {
+                    var r = win.WindowArea;
+                    r.X += alignOffset.X;
+                    r.Y += alignOffset.Y;
+                    win.WindowArea = r;                 // ← ROI 실제 좌표 이동(커밋)
+                }
+
+                var cam = MainForm.GetDockForm<CameraForm>();
+                if (cam != null && cam.IsHandleCreated)
+                    cam.BeginInvoke((Action)(() => cam.UpdateDiagramEntity())); // 뷰 갱신
+            }
             return anyFail == 0;
+
+
         }
         private static string GetResultValue(InspAlgorithm algo)
         {

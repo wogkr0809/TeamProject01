@@ -18,6 +18,7 @@ namespace JidamVision4
         public RunForm()
         {
             InitializeComponent();
+            this.KeyPreview = true;      // 폼이 키를 먼저 받도록
             this.AcceptButton = btnStart;   // Enter == btnStart 클릭
         }
         public void StartFromHotkey()
@@ -25,7 +26,18 @@ namespace JidamVision4
             if (!btnStart.Enabled) return;  // 연속 중 재시작 막기
             btnStart.PerformClick();        // 기존 버튼 경로(비동기) 그대로 사용
         }
-        
+
+        // 폼 레벨에서 Enter를 '검사'로 강제 라우팅
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if ((keyData & Keys.KeyCode) == Keys.Enter)
+            {
+                // 텍스트 입력 중(멀티라인 등) 예외가 필요하면 여기서 걸러주세요
+                StartFromHotkey();
+                return true;               // ← 기본/포커스 버튼 클릭을 차단
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
 
         private void btnGrab_Click(object sender, EventArgs e)
         {
