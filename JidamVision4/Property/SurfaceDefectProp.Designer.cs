@@ -49,10 +49,12 @@
             this.btnApply = new System.Windows.Forms.Button();
             this.Dilate = new System.Windows.Forms.Label();
             this.numDilate = new System.Windows.Forms.NumericUpDown();
-            this.Open = new System.Windows.Forms.Label();
-            this.numOpen = new System.Windows.Forms.NumericUpDown();
+            this.SolderOpen = new System.Windows.Forms.Label();
+            this.numSolderOpen = new System.Windows.Forms.NumericUpDown();
             this.MinRatio = new System.Windows.Forms.Label();
             this.numMinRatio = new System.Windows.Forms.NumericUpDown();
+            this.ScratchOpen = new System.Windows.Forms.Label();
+            this.numScratchOpen = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.numMaskGrow)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numTopHat)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numBinThr)).BeginInit();
@@ -62,13 +64,14 @@
             ((System.ComponentModel.ISupportInitialize)(this.numMinArea)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMaxArea)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDilate)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numOpen)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numSolderOpen)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMinRatio)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numScratchOpen)).BeginInit();
             this.SuspendLayout();
             // 
             // numMaskGrow
             // 
-            this.numMaskGrow.Location = new System.Drawing.Point(188, 310);
+            this.numMaskGrow.Location = new System.Drawing.Point(350, 308);
             this.numMaskGrow.Name = "numMaskGrow";
             this.numMaskGrow.Size = new System.Drawing.Size(120, 25);
             this.numMaskGrow.TabIndex = 0;
@@ -76,7 +79,7 @@
             // chkScratch
             // 
             this.chkScratch.AutoSize = true;
-            this.chkScratch.Location = new System.Drawing.Point(108, 33);
+            this.chkScratch.Location = new System.Drawing.Point(26, 45);
             this.chkScratch.Name = "chkScratch";
             this.chkScratch.Size = new System.Drawing.Size(102, 19);
             this.chkScratch.TabIndex = 1;
@@ -85,7 +88,7 @@
             // 
             // numTopHat
             // 
-            this.numTopHat.Location = new System.Drawing.Point(90, 75);
+            this.numTopHat.Location = new System.Drawing.Point(105, 70);
             this.numTopHat.Name = "numTopHat";
             this.numTopHat.Size = new System.Drawing.Size(120, 25);
             this.numTopHat.TabIndex = 2;
@@ -103,7 +106,7 @@
             // MaskGrow
             // 
             this.MaskGrow.AutoSize = true;
-            this.MaskGrow.Location = new System.Drawing.Point(105, 310);
+            this.MaskGrow.Location = new System.Drawing.Point(268, 310);
             this.MaskGrow.Name = "MaskGrow";
             this.MaskGrow.Size = new System.Drawing.Size(76, 15);
             this.MaskGrow.TabIndex = 4;
@@ -121,7 +124,7 @@
             // BinThr
             // 
             this.BinThr.AutoSize = true;
-            this.BinThr.Location = new System.Drawing.Point(23, 123);
+            this.BinThr.Location = new System.Drawing.Point(18, 108);
             this.BinThr.Name = "BinThr";
             this.BinThr.Size = new System.Drawing.Size(48, 15);
             this.BinThr.TabIndex = 6;
@@ -130,7 +133,7 @@
             // MinLen
             // 
             this.MinLen.AutoSize = true;
-            this.MinLen.Location = new System.Drawing.Point(23, 203);
+            this.MinLen.Location = new System.Drawing.Point(18, 176);
             this.MinLen.Name = "MinLen";
             this.MinLen.Size = new System.Drawing.Size(54, 15);
             this.MinLen.TabIndex = 8;
@@ -139,7 +142,7 @@
             // MaxWidth
             // 
             this.MaxWidth.AutoSize = true;
-            this.MaxWidth.Location = new System.Drawing.Point(17, 244);
+            this.MaxWidth.Location = new System.Drawing.Point(17, 207);
             this.MaxWidth.Name = "MaxWidth";
             this.MaxWidth.Size = new System.Drawing.Size(73, 15);
             this.MaxWidth.TabIndex = 9;
@@ -147,21 +150,21 @@
             // 
             // numBinThr
             // 
-            this.numBinThr.Location = new System.Drawing.Point(90, 121);
+            this.numBinThr.Location = new System.Drawing.Point(105, 106);
             this.numBinThr.Name = "numBinThr";
             this.numBinThr.Size = new System.Drawing.Size(120, 25);
             this.numBinThr.TabIndex = 11;
             // 
             // numMinLen
             // 
-            this.numMinLen.Location = new System.Drawing.Point(90, 193);
+            this.numMinLen.Location = new System.Drawing.Point(105, 176);
             this.numMinLen.Name = "numMinLen";
             this.numMinLen.Size = new System.Drawing.Size(120, 25);
             this.numMinLen.TabIndex = 13;
             // 
             // numMaxWidth
             // 
-            this.numMaxWidth.Location = new System.Drawing.Point(96, 234);
+            this.numMaxWidth.Location = new System.Drawing.Point(105, 207);
             this.numMaxWidth.Name = "numMaxWidth";
             this.numMaxWidth.Size = new System.Drawing.Size(120, 25);
             this.numMaxWidth.TabIndex = 14;
@@ -169,7 +172,7 @@
             // Thr
             // 
             this.Thr.AutoSize = true;
-            this.Thr.Location = new System.Drawing.Point(263, 69);
+            this.Thr.Location = new System.Drawing.Point(249, 77);
             this.Thr.Name = "Thr";
             this.Thr.Size = new System.Drawing.Size(27, 15);
             this.Thr.TabIndex = 16;
@@ -178,7 +181,7 @@
             // MinArea
             // 
             this.MinArea.AutoSize = true;
-            this.MinArea.Location = new System.Drawing.Point(249, 135);
+            this.MinArea.Location = new System.Drawing.Point(237, 145);
             this.MinArea.Name = "MinArea";
             this.MinArea.Size = new System.Drawing.Size(59, 15);
             this.MinArea.TabIndex = 17;
@@ -187,7 +190,7 @@
             // MaxArea
             // 
             this.MaxArea.AutoSize = true;
-            this.MaxArea.Location = new System.Drawing.Point(243, 195);
+            this.MaxArea.Location = new System.Drawing.Point(231, 178);
             this.MaxArea.Name = "MaxArea";
             this.MaxArea.Size = new System.Drawing.Size(65, 15);
             this.MaxArea.TabIndex = 18;
@@ -195,28 +198,28 @@
             // 
             // numThr
             // 
-            this.numThr.Location = new System.Drawing.Point(314, 67);
+            this.numThr.Location = new System.Drawing.Point(334, 75);
             this.numThr.Name = "numThr";
             this.numThr.Size = new System.Drawing.Size(120, 25);
             this.numThr.TabIndex = 22;
             // 
             // numMinArea
             // 
-            this.numMinArea.Location = new System.Drawing.Point(314, 133);
+            this.numMinArea.Location = new System.Drawing.Point(334, 145);
             this.numMinArea.Name = "numMinArea";
             this.numMinArea.Size = new System.Drawing.Size(120, 25);
             this.numMinArea.TabIndex = 23;
             // 
             // numMaxArea
             // 
-            this.numMaxArea.Location = new System.Drawing.Point(314, 187);
+            this.numMaxArea.Location = new System.Drawing.Point(334, 176);
             this.numMaxArea.Name = "numMaxArea";
             this.numMaxArea.Size = new System.Drawing.Size(120, 25);
             this.numMaxArea.TabIndex = 24;
             // 
             // btnApply
             // 
-            this.btnApply.Location = new System.Drawing.Point(344, 236);
+            this.btnApply.Location = new System.Drawing.Point(369, 217);
             this.btnApply.Name = "btnApply";
             this.btnApply.Size = new System.Drawing.Size(101, 44);
             this.btnApply.TabIndex = 25;
@@ -226,7 +229,7 @@
             // Dilate
             // 
             this.Dilate.AutoSize = true;
-            this.Dilate.Location = new System.Drawing.Point(23, 165);
+            this.Dilate.Location = new System.Drawing.Point(18, 143);
             this.Dilate.Name = "Dilate";
             this.Dilate.Size = new System.Drawing.Size(43, 15);
             this.Dilate.TabIndex = 26;
@@ -234,31 +237,31 @@
             // 
             // numDilate
             // 
-            this.numDilate.Location = new System.Drawing.Point(90, 155);
+            this.numDilate.Location = new System.Drawing.Point(105, 141);
             this.numDilate.Name = "numDilate";
             this.numDilate.Size = new System.Drawing.Size(120, 25);
             this.numDilate.TabIndex = 27;
             // 
-            // Open
+            // SolderOpen
             // 
-            this.Open.AutoSize = true;
-            this.Open.Location = new System.Drawing.Point(247, 105);
-            this.Open.Name = "Open";
-            this.Open.Size = new System.Drawing.Size(43, 15);
-            this.Open.TabIndex = 28;
-            this.Open.Text = "Open";
+            this.SolderOpen.AutoSize = true;
+            this.SolderOpen.Location = new System.Drawing.Point(243, 108);
+            this.SolderOpen.Name = "SolderOpen";
+            this.SolderOpen.Size = new System.Drawing.Size(85, 15);
+            this.SolderOpen.TabIndex = 28;
+            this.SolderOpen.Text = "SolderOpen";
             // 
-            // numOpen
+            // numSolderOpen
             // 
-            this.numOpen.Location = new System.Drawing.Point(314, 98);
-            this.numOpen.Name = "numOpen";
-            this.numOpen.Size = new System.Drawing.Size(120, 25);
-            this.numOpen.TabIndex = 29;
+            this.numSolderOpen.Location = new System.Drawing.Point(334, 106);
+            this.numSolderOpen.Name = "numSolderOpen";
+            this.numSolderOpen.Size = new System.Drawing.Size(120, 25);
+            this.numSolderOpen.TabIndex = 29;
             // 
             // MinRatio
             // 
             this.MinRatio.AutoSize = true;
-            this.MinRatio.Location = new System.Drawing.Point(23, 273);
+            this.MinRatio.Location = new System.Drawing.Point(17, 236);
             this.MinRatio.Name = "MinRatio";
             this.MinRatio.Size = new System.Drawing.Size(64, 15);
             this.MinRatio.TabIndex = 30;
@@ -266,19 +269,37 @@
             // 
             // numMinRatio
             // 
-            this.numMinRatio.Location = new System.Drawing.Point(96, 271);
+            this.numMinRatio.Location = new System.Drawing.Point(105, 238);
             this.numMinRatio.Name = "numMinRatio";
             this.numMinRatio.Size = new System.Drawing.Size(120, 25);
             this.numMinRatio.TabIndex = 31;
+            // 
+            // ScratchOpen
+            // 
+            this.ScratchOpen.AutoSize = true;
+            this.ScratchOpen.Location = new System.Drawing.Point(3, 269);
+            this.ScratchOpen.Name = "ScratchOpen";
+            this.ScratchOpen.Size = new System.Drawing.Size(93, 15);
+            this.ScratchOpen.TabIndex = 32;
+            this.ScratchOpen.Text = "ScratchOpen";
+            // 
+            // numScratchOpen
+            // 
+            this.numScratchOpen.Location = new System.Drawing.Point(105, 269);
+            this.numScratchOpen.Name = "numScratchOpen";
+            this.numScratchOpen.Size = new System.Drawing.Size(120, 25);
+            this.numScratchOpen.TabIndex = 33;
             // 
             // SurfaceDefectProp
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.numScratchOpen);
+            this.Controls.Add(this.ScratchOpen);
             this.Controls.Add(this.numMinRatio);
             this.Controls.Add(this.MinRatio);
-            this.Controls.Add(this.numOpen);
-            this.Controls.Add(this.Open);
+            this.Controls.Add(this.numSolderOpen);
+            this.Controls.Add(this.SolderOpen);
             this.Controls.Add(this.numDilate);
             this.Controls.Add(this.Dilate);
             this.Controls.Add(this.btnApply);
@@ -311,8 +332,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.numMinArea)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMaxArea)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numDilate)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.numOpen)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numSolderOpen)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numMinRatio)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numScratchOpen)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -341,9 +363,11 @@
         private System.Windows.Forms.Button btnApply;
         private System.Windows.Forms.Label Dilate;
         private System.Windows.Forms.NumericUpDown numDilate;
-        private System.Windows.Forms.Label Open;
-        private System.Windows.Forms.NumericUpDown numOpen;
+        private System.Windows.Forms.Label SolderOpen;
+        private System.Windows.Forms.NumericUpDown numSolderOpen;
         private System.Windows.Forms.Label MinRatio;
         private System.Windows.Forms.NumericUpDown numMinRatio;
+        private System.Windows.Forms.Label ScratchOpen;
+        private System.Windows.Forms.NumericUpDown numScratchOpen;
     }
 }

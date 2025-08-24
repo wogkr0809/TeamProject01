@@ -75,13 +75,7 @@ namespace JidamVision4.Teach
                 case InspWindowType.Soldering:
                     // 1) 매칭은 동일
                     inspWindow.AddInspAlgorithm(InspectType.InspMatch);
-                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
 
-                    // 2) 기존 Binary(Blob) 제거
-                    if (inspWindow.AlgorithmList != null)
-                        inspWindow.AlgorithmList.RemoveAll(a => a.InspectType == InspectType.InspBinary);
-
-                    // 3) SurfaceDefectAlgorithm 추가 (Scratch/Soldering 스위치 기본값 설정)
                     var surf = new SurfaceDefectAlgorithm
                     {
                         EnableScratch = (inspWindow.InspWindowType == InspWindowType.Scratch),

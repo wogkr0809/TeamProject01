@@ -81,6 +81,7 @@ namespace JidamVision4.Inspect
 
             // 검사 전 데이터 갱신도 활성만
             foreach (var w in active)
+
                 UpdateInspData(w);
 
             // ★ 활성만 보드에 전달
@@ -160,6 +161,13 @@ namespace JidamVision4.Inspect
             if (inspWindow is null)
                 return false;
 
+            // ▼ 추가: Scratch/Soldering 윈도우는 InspBinary를 아예 리스트에서 제거
+            if (inspWindow.InspWindowType == InspWindowType.Scratch ||
+                inspWindow.InspWindowType == InspWindowType.Soldering)
+            {
+                inspWindow.AlgorithmList?.RemoveAll(a => a.InspectType == InspectType.InspBinary);
+            }
+
             Rect windowArea = inspWindow.WindowArea;
 
             inspWindow.PatternLearn();
@@ -184,9 +192,6 @@ namespace JidamVision4.Inspect
                                       .Where(w => w != null && !ReferenceEquals(w, inspWindow))
                                       .Select(w => w.WindowArea)
                                       .ToList();
-
-                   
-                   
                 }
             }
 
@@ -205,6 +210,11 @@ namespace JidamVision4.Inspect
             List<InspAlgorithm> inspAlgorithmList = inspObj.AlgorithmList;
             foreach (var algorithm in inspAlgorithmList)
             {
+                if ((inspObj.InspWindowType == InspWindowType.Scratch ||
+                inspObj.InspWindowType == InspWindowType.Soldering) &&
+                algorithm.InspectType == InspectType.InspBinary)
+                    continue;
+
                 if (algorithm.InspectType != inspType && inspType != InspectType.InspNone)
                     continue;
 
@@ -232,9 +242,13 @@ namespace JidamVision4.Inspect
         {
             var totalArea = new List<DrawInspectInfo>();
             if (inspObj == null) return totalArea;
-                
+
             foreach (var algorithm in inspObj.AlgorithmList)
             {
+                if ((inspObj.InspWindowType == InspWindowType.Scratch ||
+                inspObj.InspWindowType == InspWindowType.Soldering) &&
+                algorithm.InspectType == InspectType.InspBinary)
+                    continue;
                 if (algorithm.InspectType != inspType && inspType != InspectType.InspNone)
                     continue;
 
