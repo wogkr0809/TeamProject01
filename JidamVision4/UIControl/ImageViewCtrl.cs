@@ -470,6 +470,7 @@ namespace JidamVision4.UIControl
         {
             base.OnPaint(e);
 
+
             if (_bitmapImage != null && Canvas != null)
             {
                 // 캔버스를 초기화하고 이미지 그리기
@@ -1781,7 +1782,11 @@ namespace JidamVision4.UIControl
             Invalidate();
         }
 
+       
+
     }
+
+
 
     //#10_INSPWINDOW#22 ImageViewCtrl에서 사용하는 이벤트 타입 정의
     #region EventArgs
