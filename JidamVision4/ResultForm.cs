@@ -286,7 +286,10 @@ namespace JidamVision4
             }
         }
 
-
+        public void ClearAll()
+        {
+            try { _treeListView?.SetObjects(null); _treeListView?.Refresh(); } catch { }
+        }
 
     }
 }

@@ -18,6 +18,7 @@ using JidamVision4.Util;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using JidamVision4.Sequence;
+using static JidamVision4.MainForm;
 
 namespace JidamVision4.Core
 {
@@ -257,9 +258,11 @@ namespace JidamVision4.Core
             VisionSequence.Inst.SeqCommand += SeqCommand;
 
             //#16_LAST_MODELOPEN#5 마지막 모델 열기 여부 확인
-            if (!LastestModelOpen())
+            if (LastestModelOpen())
+                UiHelpers.UpdateUiByModelStateSafe();
+            else
             {
-                MessageBox.Show("모델 열기 실패!");
+                UiHelpers.UpdateUiByModelStateSafe(); // ← 없으니 비활성으로 토글
             }
 
             return true;
@@ -1020,6 +1023,17 @@ namespace JidamVision4.Core
 
             bool isDefect;
             return _inspWorker.RunInspect(out isDefect);
+        }
+
+        public void ResetToEmptyModel()
+        {
+
+            if (CurModel == null)
+                CurModel = new Model();
+            else
+                CurModel.Reset();
+
+            SLogger.Write("InspStage: 모델을 빈 상태로 전환");
         }
 
         #region Disposable

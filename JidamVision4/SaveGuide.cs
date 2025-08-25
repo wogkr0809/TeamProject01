@@ -44,13 +44,15 @@ namespace JidamVision4
                 SLogger.Write($"[Model] 저장: {m.ModelName} ({m.ModelPath})");
             }
 
-            //여기에서 모델 닫는 기능 함수(ModelCloser)를 호출하면 될 것 같음
+            ModelCloser.CloseModelToEmpty();
+            this.DialogResult = DialogResult.OK;
             this.Close(); // 폼 닫기
         }
 
         private void btnNo_Click(object sender, EventArgs e)
         {
-            //여기에서 모델 닫는 기능 함수(ModelCloser)를 호출하면 될 것 같음
+            ModelCloser.CloseModelToEmpty();
+            this.DialogResult = DialogResult.OK;
             this.Close(); // 폼 닫기
         }
 

@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using static JidamVision4.MainForm;
 
 namespace JidamVision4.Teach
 {
@@ -109,6 +110,7 @@ namespace JidamVision4.Teach
             {
                 window.SaveInspWindow(this);
             }
+            UiHelpers.UpdateUiByModelStateSafe();
         }
 
         public bool SaveAs(string selectedPath)
@@ -155,10 +157,7 @@ namespace JidamVision4.Teach
         {
             ModelPath = string.Empty;
             ModelName = string.Empty;
-            InspWindowList.Clear();
-
-            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
-            cameraForm.UpdateDiagramEntity();
+            InspWindowList?.Clear();
         }
     }
 }

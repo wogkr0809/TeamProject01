@@ -16,6 +16,7 @@ using OpenCvSharp;
 using OpenCvSharp.Extensions;    
 using JidamVision4.Algorithm;
 using JidamVision4.UIControl;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Window;
 
 
 namespace JidamVision4
@@ -45,10 +46,13 @@ namespace JidamVision4
         //#2_DOCKPANEL#1 DockPanel을 전역으로 선언
         private static DockPanel _dockPanel;
 
+        private static MainForm _instance;
+        public static MainForm GetThis() => _instance;
+
         public MainForm()
         {
             InitializeComponent();
-
+            _instance = this;
             //#2_DOCKPANEL#2 DockPanel 초기화
             _dockPanel = new DockPanel
             {
@@ -148,11 +152,18 @@ namespace JidamVision4
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            SLogger.Write($"모델 닫기 안내");
-            SaveGuide saveGuide = new SaveGuide();
-            saveGuide.StartPosition = FormStartPosition.CenterScreen;
-            saveGuide.ShowDialog();
-            Global.Inst.Dispose();
+            using (var saveGuide = new SaveGuide())
+            {
+                saveGuide.StartPosition = FormStartPosition.CenterScreen;
+                var dr = saveGuide.ShowDialog();
+                if (dr == DialogResult.Cancel)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            Global.Inst.Dispose(); // 전체 리소스 정리
         }
 
         //#12_MODEL SAVE#3 모델 파일 열기,저장, 다른 이름으로 저장 기능 구현
@@ -176,6 +187,7 @@ namespace JidamVision4
             {
                 this.Text = GetMdoelTitle(curModel);
             }
+            UiHelpers.UpdateUiByModelStateSafe();
         }
 
         private void modelOpenMenuItem_Click(object sender, EventArgs e)
@@ -200,6 +212,7 @@ namespace JidamVision4
                     }
                 }
             }
+            UiHelpers.UpdateUiByModelStateSafe();
         }
 
         private void modelSaveMenuItem_Click(object sender, EventArgs e)
@@ -260,10 +273,43 @@ namespace JidamVision4
 
         private void modelCloseToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SLogger.Write($"모델 닫기 안내");
-            SaveGuide saveGuide = new SaveGuide();
-            saveGuide.StartPosition = FormStartPosition.CenterScreen;
-            saveGuide.ShowDialog();
+            using (var dlg = new SaveGuide())
+            {
+                dlg.StartPosition = FormStartPosition.CenterParent;
+                if (dlg.ShowDialog(this) == DialogResult.Cancel)
+                    return;
+            }
+            // SaveGuide 내부에서 이미 CloseModelToEmpty 수행
         }
+
+        public static class UiHelpers
+        {
+            public static void UpdateUiByModelStateSafe()
+            {
+                var main = Application.OpenForms.OfType<MainForm>().FirstOrDefault();
+                if (main == null) return;
+
+                if (main.InvokeRequired) main.BeginInvoke((Action)main.UpdateUiByModelState);
+                else main.UpdateUiByModelState();
+            }
+        }
+
+        public void UpdateUiByModelState()  // ← 이름만 변경
+        {
+            if (InvokeRequired) { BeginInvoke((Action)UpdateUiByModelState); return; }
+
+            var cur = Global.Inst?.InspStage?.CurModel;
+            bool hasModel = cur != null &&
+                            (!string.IsNullOrWhiteSpace(cur.ModelPath) ||
+                             (cur.InspWindowList?.Count ?? 0) > 0);
+
+            if (modelSaveMenuItem != null) modelSaveMenuItem.Enabled = hasModel;
+            if (modelSaveAsMenuItem != null) modelSaveAsMenuItem.Enabled = true;   // Save As는 항상 가능
+            if (modelCloseToolStripMenuItem != null) modelCloseToolStripMenuItem.Enabled = hasModel;
+
+            // 디버그 로그(상태 추적에 도움)
+            SLogger.Write($"[UI] hasModel={hasModel}, path='{cur?.ModelPath}', roiCount={cur?.InspWindowList?.Count ?? 0}");
+        }
+
     }
 }
