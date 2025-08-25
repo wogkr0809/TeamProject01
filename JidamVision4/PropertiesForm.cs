@@ -24,8 +24,7 @@ namespace JidamVision4
         Dictionary<string, TabPage> _allTabs = new Dictionary<string, TabPage>();
 
         private SurfaceDefectProp surfProp;
-        private TabPage _surfaceTab, _binaryTab;
-        BinaryProp _binaryProp;
+        private TabPage _surfaceTab;
 
         public PropertiesForm()
         {
@@ -111,11 +110,41 @@ namespace JidamVision4
         //#11_MODEL_TREE#3 InspWindow에서 사용하는 알고리즘을 모두 탭에 추가
         public void ShowProperty(InspWindow window)
         {
+
+            // Surface 윈도우 여부
+            bool isSurfaceWin =
+            window != null &&
+            window.AlgorithmList.Any(a => a is SurfaceDefectAlgorithm);
+
+            EnsureSurfaceTab(window);
+
             foreach (InspAlgorithm algo in window.AlgorithmList)
             {
+                if (isSurfaceWin && algo.InspectType == InspectType.InspBinary)
+                    continue;
                 LoadOptionControl(algo.InspectType);
             }
-            EnsureSurfaceTab(window);
+            // ▼ 추가: 혹시 이전에 만들어진 InspBinary 탭이 남아있으면 제거
+            if (isSurfaceWin)
+            {
+                string binTabName = InspectType.InspBinary.ToString();
+                for (int i = tabPropControl.TabPages.Count - 1; i >= 0; i--)
+                {
+                    if (tabPropControl.TabPages[i].Text == binTabName)
+                    {
+                        var tp = tabPropControl.TabPages[i];
+                        tabPropControl.TabPages.Remove(tp);
+                        if (_allTabs.ContainsKey(binTabName)) _allTabs.Remove(binTabName);
+                        tp.Dispose();
+                        break;
+                    }
+                }
+
+                // 현재 선택 탭이 사라졌다면 보이는 탭으로 전환
+                var firstVisible = tabPropControl.TabPages.Cast<TabPage>().FirstOrDefault();
+                if (firstVisible != null)
+                    tabPropControl.SelectedTab = firstVisible;
+            }
         }
 
         public void ResetProperty()
@@ -131,6 +160,9 @@ namespace JidamVision4
             if (window == null)
                 return;
 
+            bool isSurfaceWin =
+            window.AlgorithmList.Any(a => a is SurfaceDefectAlgorithm);
+
             EnsureSurfaceTab(window);
 
             foreach (TabPage tabPage in tabPropControl.TabPages)
@@ -142,6 +174,9 @@ namespace JidamVision4
 
                 if (uc is BinaryProp binaryProp)
                 {
+
+                    if (isSurfaceWin) continue;
+
                     var blobAlgo = window.FindInspAlgorithm(InspectType.InspBinary) as BlobAlgorithm;
                     binaryProp.SetAlgorithm(blobAlgo);
                 }
@@ -161,13 +196,6 @@ namespace JidamVision4
                                         .FirstOrDefault(a => a is SurfaceDefectAlgorithm)
                                         as SurfaceDefectAlgorithm;
                 surfProp.Bind(window, surAlgo);
-            }
-
-            if (_binaryProp != null && window != null)
-            {
-                var blob = GetOrAddBlob(window);
-                _binaryProp.SetAlgorithm(blob);
-
             }
 
         }
@@ -204,21 +232,6 @@ namespace JidamVision4
                     _surfaceTab.Controls.Add(surfProp);
                     tabPropControl.TabPages.Add(_surfaceTab);
                 }
-                if (_binaryTab == null)
-                {
-                    _binaryProp = new BinaryProp { Dock = DockStyle.Fill };
-
-                    _binaryProp.RangeChanged += RangeSlider_RangeChanged;
-                    _binaryProp.ImageChannelChanged += ImageChannelChanged;
-
-                    _binaryTab = new TabPage("InspBinary") { Name = "TabBinary" };
-                    _binaryTab.Controls.Add(_binaryProp);
-                    tabPropControl.TabPages.Add(_binaryTab);
-                }
-
-                var blob = GetOrAddBlob(window);
-                _binaryProp.SetAlgorithm(blob);
-
             }
             else
             {
@@ -230,16 +243,7 @@ namespace JidamVision4
                     surfProp = null;
                 }
             }
-        }
-        private static BlobAlgorithm GetOrAddBlob(InspWindow w)
-        {
-            var blob = w.FindInspAlgorithm(InspectType.InspBinary) as BlobAlgorithm;
-            if (blob == null)
-            {
-                blob = new BlobAlgorithm();
-                w.AlgorithmList.Add(blob);
-            }
-            return blob;
+
         }
     }
 }

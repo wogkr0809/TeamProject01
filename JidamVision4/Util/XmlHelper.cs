@@ -183,7 +183,7 @@ namespace Common.Util.Helpers
 			using (Stream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 			{
 				return (T)deserializer.Deserialize(stream);
-				//return (T)serializer.Deserialize(stream);
+				
 			}
 		}
 

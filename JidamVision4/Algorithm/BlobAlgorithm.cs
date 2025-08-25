@@ -11,26 +11,6 @@ using JidamVision4.Core;
 
 namespace JidamVision4.Algorithm
 {
-    /*
-   #7_BINARY_PREVIEW# - <<<이진화 프리뷰 구현>>> 
-   이진화 검사를 위한 프리뷰를 R,G,B,Mono 별로 보여주는 기능 구현
-    비젼검사를 위한 알고리즘 클래스를 구성하고, 그 안에서 이진화 임계값을 사용해 프리뷰 구현
-   1) Algorithm / InspAlgorithm 클래스 생성 - 검사 알고리즘을 위한 추상화 클래스
-   2) Algorithm / BlobAlgorithm 클래스 생성 - InspAlgorithm를 상속 받아, 이진화 검사를 위한 클래스
-   3) Core / PreviewImagfe 클래스 생성 - 이진화 프리뷰를 구현하는 클래스
-   4) #7_BINARY_PREVIEW#1~10
-   */
-
-    /*
-   #8_INSPECT_BINARY# - <<<이진화 검사 구현>>> 
-   이진화에서 백색으로 나오는 부분의 Area,Width,Height 등의 특징을 가지고 검출 영역을 구하는 기능 구현
-   1) Core / Define 클래스 생성 - 프로그램 전체적으로 전역 설정이나, 타입을 정의하기 위한 클래스 
-   2) Algorithm / DrawInspectInfo 클래스 생성 - 검사 결과 영역을 그리기 위한 클래스
-   3) BinaryProp 디자인창을 통해서, 검사 속성 추가
-   4) #8_INSPECT_BINARY#
-   */
-
-    //이진화 임계값 설정을 구조체로 만들기
     public struct BinaryThreshold
     {
         public int lower { get; set; }
@@ -45,8 +25,6 @@ namespace JidamVision4.Algorithm
         }
     }
 
-    //#8_INSPECT_BINARY#4 이진화 검사 방법과 Blob Features 정보 정의
-    //이진화 검사 방법 정의
     public enum BinaryMethod : int
     {
         [Description("필터")]
@@ -55,7 +33,6 @@ namespace JidamVision4.Algorithm
         PixelCount
     }
 
-    //Blob Features 정보 정의
     public class BlobFilter
     {
         public string name { get; set; }
@@ -63,19 +40,14 @@ namespace JidamVision4.Algorithm
         public int min { get; set; }
         public int max { get; set; }
 
-        // 기본 생성자가 필요
         public BlobFilter() { }
     }
-
 
     public class BlobAlgorithm : InspAlgorithm
     {
 
         public BinaryThreshold BinThreshold { get; set; } = new BinaryThreshold();
 
-        //#8_INSPECT_BINARY#5 Blob Features 검사를 위한 변수 추가
-
-        //Blob Features 필터 인덱스 정의
         public readonly int FILTER_AREA = 0;
         public readonly int FILTER_WIDTH = 1;
         public readonly int FILTER_HEIGHT = 2;
@@ -84,8 +56,6 @@ namespace JidamVision4.Algorithm
         ////이진화 필터로 찾은 영역
         //private List<DrawInspectInfo> _findArea;
         private List<DrawInspectInfo> _findArea = new List<DrawInspectInfo>();
-
-        // ResultString 도 마찬가지
         public List<string> ResultString { get; private set; } = new List<string>();
 
         public BinaryMethod BinMethod { get; set; } = BinaryMethod.Feature;
@@ -268,7 +238,7 @@ namespace JidamVision4.Algorithm
         //#이진화후, Blob을 찾아서, 그 특징값이 필터된 것을 찾는다
         private bool InspBlobFilter(Mat binImage)
         {
-            // 컨투어 찾기
+            // --- [2] (기존) 스크래치 연결 단계 (가로/세로 Close로 잔틈 메움)
             Point[][] contours;
             HierarchyIndex[] hierarchy;
             Cv2.FindContours(binImage, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxSimple);

@@ -181,7 +181,7 @@ namespace JidamVision4.Property
 
             // Solder 쪽
             numThr.Value = _algo.SolderThr;
-            numOpen.Value = _algo.SolderOpen;
+            numSolderOpen.Value = _algo.SolderOpen;
             numMinArea.Value = _algo.SolderMinArea;
             numMaxArea.Value = _algo.SolderMaxArea;
 
@@ -211,7 +211,7 @@ namespace JidamVision4.Property
         }
         private void EnableSolderInputs(bool on)
         {
-            numThr.Enabled = numOpen.Enabled = numMinArea.Enabled = numMaxArea.Enabled = on;
+            numThr.Enabled = numSolderOpen.Enabled = numMinArea.Enabled = numMaxArea.Enabled = on;
         }
 
         private void btnEditMask_Click(object sender, EventArgs e)

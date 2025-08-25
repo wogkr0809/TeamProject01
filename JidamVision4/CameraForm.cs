@@ -24,10 +24,6 @@ namespace JidamVision4
     public partial class CameraForm : DockContent
     {
 
-        // === Measure overlay ===
-        private ToolStrip _measureStrip;
-        private ToolStripButton _btnMeasure;
-
         // === 커서 정보 바 ===
         private Panel _cursorBar;
         private Label _lblXY;
