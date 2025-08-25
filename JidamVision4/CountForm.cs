@@ -28,6 +28,7 @@ using PdfPhrase = iTextSharp.text.Phrase;
 using PdfPCell = iTextSharp.text.pdf.PdfPCell;
 using PdfPTable = iTextSharp.text.pdf.PdfPTable;
 using PdfWriter = iTextSharp.text.pdf.PdfWriter;
+using JidamVision4.Reports;
 
 namespace JidamVision4
 {
@@ -53,6 +54,29 @@ namespace JidamVision4
             }
             catch { }
             return fallback;
+        }
+
+
+        // 카테고리 표(DataGridView) → Dictionary<string,int>
+        private Dictionary<string, int> ReadCategoryCountsFromGrid(DataGridView grid)
+        {
+            var d = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            if (grid == null) return d;
+
+            foreach (DataGridViewRow r in grid.Rows)
+            {
+                if (r.IsNewRow) continue;
+                var nameObj = (r.Cells.Count > 0) ? r.Cells[0].Value : null;
+                var valObj = (r.Cells.Count > 1) ? r.Cells[1].Value : null;
+
+                var name = nameObj?.ToString()?.Trim();
+                if (string.IsNullOrWhiteSpace(name)) continue;
+
+                int n = 0;
+                if (valObj != null) int.TryParse(valObj.ToString(), out n);
+                d[name] = n;
+            }
+            return d;
         }
 
         private string ResolveCurrentImagePath()
@@ -295,13 +319,29 @@ namespace JidamVision4
                         bottom.AddCell(Wrap(right));
                     }
 
-                    doc.Add(bottom);
-
                     // === [PAGE2: 전체 요약 페이지 추가] ===
                     doc.NewPage();
-                    var ctx2 = BuildOverallContextForPage2();               // ▼ 바로 아래 4) 메서드 추가
-                    JidamVision4.Reports.OverallReportPage2.Build(doc, ctx2);
 
+                    string baseDir = Path.GetDirectoryName(ResolveCurrentImagePath());
+                    if (string.IsNullOrWhiteSpace(baseDir)) baseDir = Application.StartupPath;
+
+                    OverallReportPage2.BuildFromFiles(
+     doc,
+     DateTime.Now,
+     (int)(Global.Inst?.InspStage?.Accum?.Total ?? 0L), // ← long → int
+     (int)(Global.Inst?.InspStage?.Accum?.OK ?? 0L), // ← long → int
+     (int)(Global.Inst?.InspStage?.Accum?.NG ?? 0L), // ← long → int
+     ReadCategoryCountsFromGrid(_catGrid),
+     baseDir,
+     "0000.JPG",   // original
+     "020.JPG",    // Chip
+     "008.JPG",    // Lead
+     "033.JPG",    // Resistance  (null → 파일명 교체)
+     "093.JPG",    // Scratch
+     "019.JPG"     // Soldering
+ );
+
+                    // 바로 이어서
                     doc.Close();
                 }
             }
