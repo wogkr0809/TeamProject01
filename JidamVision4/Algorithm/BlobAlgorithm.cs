@@ -45,18 +45,6 @@ namespace JidamVision4.Algorithm
 
     public class BlobAlgorithm : InspAlgorithm
     {
-        // --- Scratch-friendly options ---
-
-        // --- Thick object suppression (붙은 저항/패드 제거용) ---
-        public bool ExcludeThickBlobs { get; set; } = true; // 사용 여부
-        public int ThickKernel { get; set; } = 7;           // 두꺼운 물체 판별 커널(홀수, 5~11 권장)
-
-        // --- Scratch-friendly options ---
-        public bool ScratchBoost { get; set; } = true;
-        public int ScratchCloseLen { get; set; } = 7;
-        public int ScratchDilate { get; set; } = 0;
-        public double MinAspectRatio { get; set; } = 3.0;
-        public int MinLength { get; set; } = 30;
 
         public BinaryThreshold BinThreshold { get; set; } = new BinaryThreshold();
 
@@ -65,33 +53,41 @@ namespace JidamVision4.Algorithm
         public readonly int FILTER_HEIGHT = 2;
         public readonly int FILTER_COUNT = 3;
 
+        ////이진화 필터로 찾은 영역
+        //private List<DrawInspectInfo> _findArea;
         private List<DrawInspectInfo> _findArea = new List<DrawInspectInfo>();
         public List<string> ResultString { get; private set; } = new List<string>();
 
         public BinaryMethod BinMethod { get; set; } = BinaryMethod.Feature;
-        public bool UseRotatedRect { get; set; } = true;
+        //검사로 찾은 영역을 최외곽박스로 표시할 지 여부
+        public bool UseRotatedRect { get; set; } = false;
 
-        private List<BlobFilter> _filterBlobs = new List<BlobFilter>();
+        List<BlobFilter> _filterBlobs = new List<BlobFilter>();
         public List<BlobFilter> BlobFilters
         {
             get { return _filterBlobs; }
             set { _filterBlobs = value; }
         }
 
+        //검사로 찾은 Blob의 개수
         public int OutBlobCount { get; set; } = 0;
 
         public BlobAlgorithm()
         {
             InspectType = InspectType.InspBinary;
             BinThreshold = new BinaryThreshold(100, 200, false);
-            EnsureDefaultFilters();
         }
 
+        //#10_INSPWINDOW#3 InspWindow 복사를 위한 BlobAlgorithm 복사 함수
         public override InspAlgorithm Clone()
         {
             var cloneAlgo = new BlobAlgorithm();
+
+            // 공통 필드 복사
             this.CopyBaseTo(cloneAlgo);
+
             cloneAlgo.CopyFrom(this);
+
             return cloneAlgo;
         }
 
@@ -103,47 +99,42 @@ namespace JidamVision4.Algorithm
             this.BinMethod = blobAlgo.BinMethod;
             this.UseRotatedRect = blobAlgo.UseRotatedRect;
 
-            this.ScratchBoost = blobAlgo.ScratchBoost;
-            this.ScratchCloseLen = blobAlgo.ScratchCloseLen;
-            this.ScratchDilate = blobAlgo.ScratchDilate;
-            this.MinAspectRatio = blobAlgo.MinAspectRatio;
-            this.MinLength = blobAlgo.MinLength;
+            this.BlobFilters = blobAlgo.BlobFilters
+                               .Select(b => new BlobFilter
+                               {
+                                   name = b.name,
+                                   isUse = b.isUse,
+                                   min = b.min,
+                                   max = b.max
+                               })
+                               .ToList();
 
-            this.BlobFilters = (blobAlgo.BlobFilters != null)
-                ? blobAlgo.BlobFilters.Select(b => new BlobFilter
-                {
-                    name = b.name,
-                    isUse = b.isUse,
-                    min = b.min,
-                    max = b.max
-                }).ToList()
-                : new List<BlobFilter>();
-
-            EnsureDefaultFilters();
             return true;
         }
 
-        private void EnsureDefaultFilters()
-        {
-            if (_filterBlobs == null) _filterBlobs = new List<BlobFilter>();
-            string[] names = { "Area", "Width", "Height", "Count" };
-            while (_filterBlobs.Count < 4)
-            {
-                _filterBlobs.Add(new BlobFilter { name = names[_filterBlobs.Count], isUse = false, min = 0, max = 0 });
-            }
-        }
 
+        //BlobAlgorithm 생성시, 기본 필터 설정
         public void SetDefault()
         {
-            _filterBlobs = new List<BlobFilter>
-            {
-                new BlobFilter(){ name="Area",  isUse=false, min=200, max=500 },
-                new BlobFilter(){ name="Width", isUse=false, min=0,   max=0   },
-                new BlobFilter(){ name="Height",isUse=false, min=0,   max=0   },
-                new BlobFilter(){ name="Count", isUse=false, min=0,   max=0   }
-            };
+            //픽셀 영역으로 이진화 필터
+            BlobFilter areaFilter = new BlobFilter()
+            { name = "Area", isUse = false, min = 200, max = 500 };
+            _filterBlobs.Add(areaFilter);
+
+            BlobFilter widthFilter = new BlobFilter()
+            { name = "width", isUse = false, min = 0, max = 0 };
+            _filterBlobs.Add(widthFilter);
+
+            BlobFilter heightFilter = new BlobFilter()
+            { name = "Height", isUse = false, min = 0, max = 0 };
+            _filterBlobs.Add(heightFilter);
+
+            BlobFilter countFilter = new BlobFilter()
+            { name = "Count", isUse = false, min = 0, max = 0 };
+            _filterBlobs.Add(countFilter);
         }
 
+        //#8_INSPECT_BINARY#6 이진화 검사 알고리즘
         public override bool DoInspect()
         {
             ResetResult();
@@ -152,6 +143,7 @@ namespace JidamVision4.Algorithm
             if (_srcImage == null)
                 return false;
 
+            //검사 영역이 검사 대상 이미지를 벗어나지 않는지 확인
             if (InspRect.Right > _srcImage.Width ||
                 InspRect.Bottom > _srcImage.Height)
                 return false;
@@ -164,33 +156,39 @@ namespace JidamVision4.Algorithm
             else
                 grayImage = targetImage;
 
+            // 이진화 처리
             Mat binaryImage = new Mat();
             Cv2.InRange(grayImage, BinThreshold.lower, BinThreshold.upper, binaryImage);
+
             if (BinThreshold.invert)
                 binaryImage = ~binaryImage;
 
+            //이진화 검사 타입에 따른 검사 함수 분기
             if (BinaryMethod.PixelCount == BinMethod)
             {
                 if (!InspPixelCount(binaryImage))
                     return false;
             }
-            else
+            else if (BinaryMethod.Feature == BinMethod)
             {
                 if (!InspBlobFilter(binaryImage))
                     return false;
             }
 
             IsInspected = true;
+
             return true;
         }
 
+        //검사 결과 초기화
         public override void ResetResult()
         {
             base.ResetResult();
-            if (_findArea != null) _findArea.Clear();
-            if (ResultString != null) ResultString.Clear();
+            if (_findArea != null)
+                _findArea.Clear();
         }
 
+        //검사 영역에서 백색 픽셀의 갯수로 OK/NG 여부만 판단
         private bool InspPixelCount(Mat binImage)
         {
             if (binImage == null || binImage.Empty())
@@ -208,8 +206,9 @@ namespace JidamVision4.Algorithm
             IsDefect = false;
             string featureInfo = $"A:{pixelCount}";
 
+            // 🔴 여기만 인덱스로 교체
             BlobFilter areaFilter = null;
-            if (BlobFilters != null && BlobFilters.Count > FILTER_AREA)
+            if (BlobFilters != null && FILTER_AREA >= 0 && FILTER_AREA < BlobFilters.Count)
                 areaFilter = BlobFilters[FILTER_AREA];
 
             if (areaFilter != null && areaFilter.isUse)
@@ -236,65 +235,26 @@ namespace JidamVision4.Algorithm
             return true;
         }
 
+        //#이진화후, Blob을 찾아서, 그 특징값이 필터된 것을 찾는다
         private bool InspBlobFilter(Mat binImage)
         {
-            if (binImage == null || binImage.Empty())
-                return false;
-
-            EnsureDefaultFilters();
-
-            if (ExcludeThickBlobs)
-            {
-                int k = Math.Max(3, (ThickKernel | 1)); // 홀수 보장
-                using (var kSq = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(k, k)))
-                using (var opened = new Mat())
-                using (var notThick = new Mat())
-                {
-                    // Open: 작은/얇은 것(스크래치)은 사라지고, 두꺼운 밝은 물체만 남음
-                    Cv2.MorphologyEx(binImage, opened, MorphTypes.Open, kSq);
-
-                    // 여유폭을 조금 더 주고 싶으면 1회 팽창(선택)
-                    // Cv2.Dilate(opened, opened, kSq, iterations: 1);
-
-                    // 두꺼운 것만 있는 마스크를 반전 → "두껍지 않은 영역"(= 얇은 선 + 배경)
-                    Cv2.BitwiseNot(opened, notThick);
-
-                    // 원본과 AND → 얇은 선(스크래치)만 남김
-                    Cv2.BitwiseAnd(binImage, notThick, binImage);
-                }
-            }
             // --- [2] (기존) 스크래치 연결 단계 (가로/세로 Close로 잔틈 메움)
-            if (ScratchBoost)
-            {
-                int k = Math.Max(3, (ScratchCloseLen | 1));
-                using (var kH = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(k, 1)))
-                using (var kV = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(1, k)))
-                {
-                    Cv2.MorphologyEx(binImage, binImage, MorphTypes.Close, kH);
-                    Cv2.MorphologyEx(binImage, binImage, MorphTypes.Close, kV);
-                }
-                if (ScratchDilate > 0)
-                {
-                    using (var kD = Cv2.GetStructuringElement(MorphShapes.Rect,
-                                 new Size(2 * ScratchDilate + 1, 2 * ScratchDilate + 1)))
-                    {
-                        Cv2.Dilate(binImage, binImage, kD, iterations: 1);
-                    }
-                }
-            }
             Point[][] contours;
             HierarchyIndex[] hierarchy;
-            Cv2.FindContours(binImage, out contours, out hierarchy,
-                             RetrievalModes.List, ContourApproximationModes.ApproxSimple);
+            Cv2.FindContours(binImage, out contours, out hierarchy, RetrievalModes.List, ContourApproximationModes.ApproxSimple);
 
-            if (_findArea == null) _findArea = new List<DrawInspectInfo>();
+            // 필터링된 객체를 담을 리스트
+            Mat filteredImage = Mat.Zeros(binImage.Size(), MatType.CV_8UC1);
+
+            if (_findArea is null)
+                _findArea = new List<DrawInspectInfo>();
+
             _findArea.Clear();
 
             int findBlobCount = 0;
 
-            for (int i = 0; i < contours.Length; i++)
+            foreach (var contour in contours)
             {
-                var contour = contours[i];
                 double area = Cv2.ContourArea(contour);
                 if (area <= 0)
                     continue;
@@ -303,74 +263,98 @@ namespace JidamVision4.Algorithm
                 int showWidth = 0;
                 int showHeight = 0;
 
-                BlobFilter areaFilter = (BlobFilters.Count > FILTER_AREA) ? BlobFilters[FILTER_AREA] : null;
-                if (areaFilter != null && areaFilter.isUse)
+                BlobFilter areaFilter = BlobFilters[FILTER_AREA];
+
+
+                if (areaFilter.isUse)
                 {
-                    if (areaFilter.min > 0 && area < areaFilter.min) continue;
-                    if (areaFilter.max > 0 && area > areaFilter.max) continue;
-                    showArea = (int)(area + 0.5);
+                    if (areaFilter.min > 0 && area < areaFilter.min)
+                        continue;
+
+                    if (areaFilter.max > 0 && area > areaFilter.max)
+                        continue;
+
+                    showArea = (int)(area + 0.5f);
                 }
 
                 Rect boundingRect = Cv2.BoundingRect(contour);
                 RotatedRect rotatedRect = Cv2.MinAreaRect(contour);
-
                 Size2d blobSize = new Size2d(boundingRect.Width, boundingRect.Height);
 
+                // RotatedRect 정보 계산
                 if (UseRotatedRect)
                 {
-                    float w = rotatedRect.Size.Width;
-                    float h = rotatedRect.Size.Height;
-                    blobSize.Width = Math.Max(w, h);
-                    blobSize.Height = Math.Min(w, h);
+                    // 너비와 높이 가져오기
+                    float width = rotatedRect.Size.Width;
+                    float height = rotatedRect.Size.Height;
+
+                    // 장축과 단축 구분
+                    blobSize.Width = Math.Max(width, height);
+                    blobSize.Height = Math.Min(width, height);
                 }
 
-                double longSide = blobSize.Width;
-                double shortSide = Math.Max(1.0, blobSize.Height);
-
-                if (MinLength > 0 && longSide < MinLength)
-                    continue;
-
-                double ratio = longSide / shortSide;
-                if (MinAspectRatio > 0 && ratio < MinAspectRatio)
-                    continue;
-
-                BlobFilter widthFilter = (BlobFilters.Count > FILTER_WIDTH) ? BlobFilters[FILTER_WIDTH] : null;
-                if (widthFilter != null && widthFilter.isUse)
+                BlobFilter widthFilter = BlobFilters[FILTER_WIDTH];
+                if (widthFilter.isUse)
                 {
-                    if (widthFilter.min > 0 && blobSize.Width < widthFilter.min) continue;
-                    if (widthFilter.max > 0 && blobSize.Width > widthFilter.max) continue;
-                    showWidth = (int)(blobSize.Width + 0.5);
+                    if (widthFilter.min > 0 && blobSize.Width < widthFilter.min)
+                        continue;
+
+                    if (widthFilter.max > 0 && blobSize.Width > widthFilter.max)
+                        continue;
+
+                    showWidth = (int)(blobSize.Width + 0.5f);
                 }
 
-                BlobFilter heightFilter = (BlobFilters.Count > FILTER_HEIGHT) ? BlobFilters[FILTER_HEIGHT] : null;
-                if (heightFilter != null && heightFilter.isUse)
+                BlobFilter heightFilter = BlobFilters[FILTER_HEIGHT];
+                if (heightFilter.isUse)
                 {
-                    if (heightFilter.min > 0 && blobSize.Height < heightFilter.min) continue;
-                    if (heightFilter.max > 0 && blobSize.Height > heightFilter.max) continue;
-                    showHeight = (int)(blobSize.Height + 0.5);
+                    if (heightFilter.min > 0 && blobSize.Height < heightFilter.min)
+                        continue;
+
+                    if (heightFilter.max > 0 && blobSize.Height > heightFilter.max)
+                        continue;
+
+                    showHeight = (int)(blobSize.Height + 0.5f);
                 }
+
+                // 필터링된 객체를 이미지에 그림
+                //Cv2.DrawContours(filteredImage, new Point[][] { contour }, -1, Scalar.White, -1);
 
                 findBlobCount++;
-
-                Rect blobRect = new Rect(
-                    boundingRect.X + InspRect.X,
-                    boundingRect.Y + InspRect.Y,
-                    boundingRect.Width,
-                    boundingRect.Height);
+                Rect blobRect = boundingRect + InspRect.TopLeft;
 
                 string featureInfo = "";
-                if (showArea > 0) featureInfo += $"A:{showArea}";
-                if (showWidth > 0) featureInfo += (featureInfo == "" ? "" : "\r\n") + $"W:{showWidth}";
-                if (showHeight > 0) featureInfo += (featureInfo == "" ? "" : "\r\n") + $"H:{showHeight}";
+                if (showArea > 0)
+                    featureInfo += $"A:{showArea}";
 
-                ResultString.Add($"Blob X:{blobRect.X}, Y:{blobRect.Y}, Size({blobRect.Width},{blobRect.Height})");
+                if (showWidth > 0)
+                {
+                    if (featureInfo != "")
+                        featureInfo += "\r\n";
 
-                var rectInfo = new DrawInspectInfo(blobRect, featureInfo, InspectType.InspBinary, DecisionType.Info);
+                    featureInfo += $"W:{showWidth}";
+                }
+
+                if (showHeight > 0)
+                {
+                    if (featureInfo != "")
+                        featureInfo += "\r\n";
+
+                    featureInfo += $"H:{showHeight}";
+                }
+
+                //검사된 정보를 문자열로 저장
+                string blobInfo;
+                blobInfo = $"Blob X:{blobRect.X}, Y:{blobRect.Y}, Size({blobRect.Width},{blobRect.Height})";
+                ResultString.Add(blobInfo);
+
+                //검사된 영역 정보를 DrawInspectInfo로 저장
+                DrawInspectInfo rectInfo = new DrawInspectInfo(blobRect, featureInfo, InspectType.InspBinary, DecisionType.Info);
 
                 if (UseRotatedRect)
                 {
-                    Point2f[] pts = rotatedRect.Points().Select(p => p + (Point2f)InspRect.TopLeft).ToArray();
-                    rectInfo.SetRotatedRectPoints(pts);
+                    Point2f[] points = rotatedRect.Points().Select(p => p + InspRect.TopLeft).ToArray();
+                    rectInfo.SetRotatedRectPoints(points);
                 }
 
                 _findArea.Add(rectInfo);
@@ -380,47 +364,47 @@ namespace JidamVision4.Algorithm
 
             IsDefect = false;
             string result = "OK";
+            BlobFilter countFilter = BlobFilters[FILTER_COUNT];
 
-            BlobFilter countFilter = (BlobFilters.Count > FILTER_COUNT) ? BlobFilters[FILTER_COUNT] : null;
-
-            if (countFilter != null && countFilter.isUse)
+            if (countFilter.isUse)
             {
-                if (countFilter.min > 0 && findBlobCount < countFilter.min) IsDefect = true;
-                if (!IsDefect && countFilter.max > 0 && findBlobCount > countFilter.max) IsDefect = true;
+                if (countFilter.min > 0 && findBlobCount < countFilter.min)
+                    IsDefect = true;
+
+                if (IsDefect == false && countFilter.max > 0 && findBlobCount > countFilter.max)
+                    IsDefect = true;
             }
             else
             {
-                if (_findArea.Count > 0) IsDefect = true;
+                if (_findArea.Count > 0)
+                    IsDefect = true;
             }
-
-            // ✅ Count 텍스트는 항상 추가 (OK면 Info, NG면 Defect 스타일)
-            DecisionType dec = IsDefect ? DecisionType.Defect : DecisionType.Info;
-            _findArea.Add(new DrawInspectInfo(InspRect, $"Count:{findBlobCount}",
-                           InspectType.InspBinary, dec));
-
 
             if (IsDefect)
             {
-                _findArea.Add(new DrawInspectInfo(InspRect, $"Count:{findBlobCount}", InspectType.InspBinary, DecisionType.Defect));
+                string rectInfo = $"Count:{findBlobCount}";
+                _findArea.Add(new DrawInspectInfo(InspRect, rectInfo, InspectType.InspBinary, DecisionType.Defect));
+
                 result = "NG";
 
-                if (countFilter != null)
-                {
-                    ResultString.Add($"[{result}] Blob count [in : {countFilter.min},{countFilter.max}, out : {findBlobCount}]");
-                }
+                string resultInfo = "";
+                resultInfo = $"[{result}] Blob count [in : {countFilter.min},{countFilter.max},out : {findBlobCount}]";
+                ResultString.Add(resultInfo);
             }
 
             return true;
         }
 
+        //#8_INSPECT_BINARY#7 검사 결과 영역 영역 반환
         public override int GetResultRect(out List<DrawInspectInfo> resultArea)
         {
             resultArea = null;
 
+            //검사가 완료되지 않았다면, 리턴
             if (!IsInspected)
                 return -1;
 
-            if (_findArea == null || _findArea.Count <= 0)
+            if (_findArea is null || _findArea.Count <= 0)
                 return -1;
 
             resultArea = _findArea;
