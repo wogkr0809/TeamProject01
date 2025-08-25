@@ -39,6 +39,27 @@ namespace JidamVision4
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        private bool _hotkeyBusy = false;
+
+        public async Task StartCurrentInspectAsync()
+        {
+            if (_hotkeyBusy) return;
+            _hotkeyBusy = true;
+            try
+            {
+                // 연속검사 중엔 엔터 무시 (원하면 허용 로직으로 바꿔도 됨)
+                if (Global.Inst.InspStage.InspWorker?.IsRunning == true)
+                    return;
+
+                // 현재 프레임만 검사 (그랩 금지)
+                await Task.Run(() =>
+                {
+                    Global.Inst.InspStage.InspectCurrentOnly();
+                });
+            }
+            finally { _hotkeyBusy = false; }
+        }
+
         private void btnGrab_Click(object sender, EventArgs e)
         {
             //#13_SET_IMAGE_BUFFER#3 그랩시 이미지 버퍼를 먼저 설정하도록 변경
