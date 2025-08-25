@@ -170,8 +170,6 @@ namespace JidamVision4.Inspect
                     cam.BeginInvoke((Action)(() => cam.UpdateDiagramEntity())); // 뷰 갱신
             }
             return anyFail == 0;
-
-
         }
         private static string GetResultValue(InspAlgorithm algo)
         {

@@ -70,10 +70,10 @@ namespace JidamVision4.Property
             // Scratch
             _algo.ScratchTopHat = (int)numTopHat.Value;
             _algo.ScratchBinThr = (int)numBinThr.Value;
-            _algo.ScratchDilate = (int)numDilate.Value;  
+            _algo.ScratchDilate = (int)numDilate.Value;
             _algo.ScratchMinLen = (int)numMinLen.Value;
             _algo.ScratchMaxWidth = (int)numMaxWidth.Value;
-           
+
             // Solder
             _algo.SolderThr = (int)numThr.Value;
             _algo.SolderOpen = (int)numDilate.Value;
@@ -83,7 +83,7 @@ namespace JidamVision4.Property
             // 공통
             _algo.MaskGrow = (int)numMaskGrow.Value;
 
-            
+
         }
         static OpenCvSharp.Rect ClampRectToMat(OpenCvSharp.Rect r, Mat m)
         {
@@ -177,7 +177,7 @@ namespace JidamVision4.Property
             numDilate.Value = _algo.ScratchDilate;
             numMinLen.Value = _algo.ScratchMinLen;
             numMaxWidth.Value = _algo.ScratchMaxWidth;
-            
+
 
             // Solder 쪽
             numThr.Value = _algo.SolderThr;
@@ -225,15 +225,18 @@ namespace JidamVision4.Property
             // ROI로 자르기
             var r = new OpenCvSharp.Rect(_algo.InspRect.X, _algo.InspRect.Y, _algo.InspRect.Width, _algo.InspRect.Height);
             Bitmap bg = null;
+            Bitmap mask = null;
+
             try
             {
-                bg = SafeRoiToBitmap(whole, r);   // ← 안전 변환
+                bg = SafeRoiToBitmap(whole, r);   // ← 안전 변환(그레이 프리뷰)
 
-                Bitmap mask = _algo.CustomMask;
+                // 편집 시작 마스크 준비 (없거나 크기 다르면 새로 생성, 있으면 32bpp로 변환)
+                mask = _algo.CustomMask;
                 if (mask == null || mask.Width != bg.Width || mask.Height != bg.Height)
                 {
                     mask = new Bitmap(bg.Width, bg.Height, PixelFormat.Format32bppArgb);
-                    using (var g = Graphics.FromImage(mask)) g.Clear(Color.White);  // 기본: 전부 검사
+                    using (var g = Graphics.FromImage(mask)) g.Clear(Color.White);  // 기본: 전부 검사(흰=검사)
                 }
                 else
                 {
@@ -243,7 +246,22 @@ namespace JidamVision4.Property
                 using (var dlg = new MaskEditorForm(bg, mask))
                 {
                     if (dlg.ShowDialog(this) == DialogResult.OK)
+                    {
+                        // (1) 편집 결과 저장
                         _algo.CustomMask = (Bitmap)dlg.ResultMask.Clone();
+
+                        // (2) 수동 마스크 사용 ON (+UI 동기화)
+                        _algo.UseManualMask = true;
+                        if (_chkUseMask != null) _chkUseMask.Checked = true;
+
+                        // (3) 정합 레퍼런스 저장 (있으면 호출, 없으면 무시)
+                        try
+                        {
+                            var mi = _algo.GetType().GetMethod("SaveMaskReference", new[] { typeof(OpenCvSharp.Mat) });
+                            if (mi != null) mi.Invoke(_algo, new object[] { whole });
+                        }
+                        catch { /* 선택: 로깅 */ }
+                    }
                 }
             }
             catch (Exception ex)
@@ -252,7 +270,13 @@ namespace JidamVision4.Property
             }
             finally
             {
-                bg?.Dispose();
+                // bg는 using 안이라 여기서만 해제
+                if (bg != null) bg.Dispose();
+
+                // dlg 내부에서 사용하던 편집용 mask도 우리가 만들었으면 해제
+                // (EnsureEditable나 새로 만든 경우에만 유효. _algo.CustomMask는 유지)
+                if (mask != null && !object.ReferenceEquals(mask, _algo.CustomMask))
+                    mask.Dispose();
             }
         }
     }

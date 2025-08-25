@@ -231,46 +231,73 @@ namespace JidamVision4.Algorithm
         }
 
         private Mat BuildInspectMask(OpenCvSharp.Size roiSize)
-        {// 0) 마스크 미사용 → ROI 전체 흰색(검사)
+        {
+            // 0) 마스크 미사용 → ROI 전체 검사(흰)
             if (!UseManualMask || CustomMask == null || CustomMask.Width <= 0 || CustomMask.Height <= 0)
                 return new Mat(roiSize, MatType.CV_8UC1, Scalar.All(255));
 
-            // 1) "원본 프레임"의 실제 크기 확보
-            //    가능하면 현재 채널의 풀 프레임 크기를 사용(가장 정확)
-            //    없으면 CustomMask의 크기를 사용
+            // 1) 편집기가 ROI 크기로 저장했는지 먼저 확인 (가장 흔한 케이스)
+            if (CustomMask.Width == roiSize.Width && CustomMask.Height == roiSize.Height)
+            {
+                using (var m = OpenCvSharp.Extensions.BitmapConverter.ToMat(CustomMask))
+                using (var gray = new Mat())
+                {
+                    // 채널 정규화
+                    if (m.Channels() == 4) Cv2.CvtColor(m, gray, ColorConversionCodes.BGRA2GRAY);
+                    else if (m.Channels() == 3) Cv2.CvtColor(m, gray, ColorConversionCodes.BGR2GRAY);
+                    else m.CopyTo(gray);
+
+                    // 흰=검사(255), 검정=제외(0)로 확실히 이진화
+                    var mask = new Mat();
+                    Cv2.Threshold(gray, mask, 127, 255, ThresholdTypes.Binary);
+
+                    // 여유치(팽창) 옵션
+                    if (MaskGrow > 0)
+                    {
+                        using (var k = Cv2.GetStructuringElement(MorphShapes.Rect,
+                                new OpenCvSharp.Size((MaskGrow | 1), (MaskGrow | 1))))
+                        {
+                            Cv2.Dilate(mask, mask, k);
+                        }
+                    }
+                    return mask;
+                }
+            }
+
+            // 2) 그 외(풀 프레임 마스크 등) → 기존 방식으로 ROI 부분만 잘라 쓰기
             OpenCvSharp.Size frameSize;
             try
             {
                 var frame = Global.Inst?.InspStage?.GetMat(0, this.ImageChannel);
-                if (frame != null && !frame.Empty())
-                    frameSize = new OpenCvSharp.Size(frame.Width, frame.Height);
-                else
-                    frameSize = new OpenCvSharp.Size(CustomMask.Width, CustomMask.Height);
+                frameSize = (frame != null && !frame.Empty())
+                    ? new OpenCvSharp.Size(frame.Width, frame.Height)
+                    : new OpenCvSharp.Size(CustomMask.Width, CustomMask.Height);
             }
             catch
             {
                 frameSize = new OpenCvSharp.Size(CustomMask.Width, CustomMask.Height);
             }
 
-            // 2) Bitmap → Mat (Index 색상표 형식이면 편집 가능한 포맷으로 복사)
-            Bitmap src = CustomMask;
-            if ((src.PixelFormat & PixelFormat.Indexed) != 0)
+            // Bitmap → Mat
+            var srcBmp = CustomMask;
+            if ((srcBmp.PixelFormat & System.Drawing.Imaging.PixelFormat.Indexed) != 0)
             {
-                var editable = new Bitmap(src.Width, src.Height, PixelFormat.Format32bppArgb);
-                using (var g = Graphics.FromImage(editable))
+                var editable = new System.Drawing.Bitmap(srcBmp.Width, srcBmp.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+                using (var g = System.Drawing.Graphics.FromImage(editable))
                 {
                     g.CompositingMode = System.Drawing.Drawing2D.CompositingMode.SourceCopy;
-                    g.DrawImageUnscaled(src, 0, 0);
+                    g.DrawImageUnscaled(srcBmp, 0, 0);
                 }
-                src = editable;
+                srcBmp = editable;
             }
 
-            Mat fullMask = BitmapConverter.ToMat(src);
-            if (!ReferenceEquals(src, CustomMask)) src.Dispose();
+            Mat fullMask = OpenCvSharp.Extensions.BitmapConverter.ToMat(srcBmp);
+            if (!ReferenceEquals(srcBmp, CustomMask)) srcBmp.Dispose();
+
             if (fullMask.Empty())
                 return new Mat(roiSize, MatType.CV_8UC1, Scalar.All(255));
 
-            // 3) 마스크 해상도가 프레임과 다르면 프레임 크기로 리사이즈(Nearest: 경계 보존)
+            // 프레임 크기와 다르면 Nearest로 리사이즈(경계 보존)
             if (fullMask.Width != frameSize.Width || fullMask.Height != frameSize.Height)
             {
                 using (var tmp = new Mat())
@@ -281,43 +308,36 @@ namespace JidamVision4.Algorithm
                 }
             }
 
-            // 4) ROI와 full 프레임의 교집합(안전 영역) 계산
+            // ROI와의 교집합 계산
             var fullRect = new OpenCvSharp.Rect(0, 0, fullMask.Width, fullMask.Height);
             var roiRect = new OpenCvSharp.Rect(InspRect.X, InspRect.Y, roiSize.Width, roiSize.Height);
             var inter = fullRect & roiRect;
-
             if (inter.Width <= 0 || inter.Height <= 0)
             {
                 fullMask.Dispose();
                 return new Mat(roiSize, MatType.CV_8UC1, Scalar.All(255));
             }
 
-            // 5) 교집합 영역을 잘라서 Gray → Binary(흰=검사, 검정=제외)
+            // 교집합을 Gray→Binary로 만들어 ROI 위치에 복사
             using (var sub = new Mat(fullMask, inter))
             using (var gray = new Mat())
             {
-                if (sub.Channels() == 4)
-                    Cv2.CvtColor(sub, gray, ColorConversionCodes.BGRA2GRAY);
-                else if (sub.Channels() == 3)
-                    Cv2.CvtColor(sub, gray, ColorConversionCodes.BGR2GRAY);
-                else
-                    sub.CopyTo(gray); // 이미 GRAY
+                if (sub.Channels() == 4) Cv2.CvtColor(sub, gray, ColorConversionCodes.BGRA2GRAY);
+                else if (sub.Channels() == 3) Cv2.CvtColor(sub, gray, ColorConversionCodes.BGR2GRAY);
+                else sub.CopyTo(gray);
 
                 var interBin = new Mat();
-                Cv2.Threshold(gray, interBin, 127, 255, ThresholdTypes.Binary); // 검정=0 제외, 흰=255 검사
+                Cv2.Threshold(gray, interBin, 127, 255, ThresholdTypes.Binary);
 
-                // 6) 여유치(팽창) – 선택사항
                 if (MaskGrow > 0)
                 {
-                    using (var k = Cv2.GetStructuringElement(
-                        MorphShapes.Rect,
-                        new OpenCvSharp.Size((MaskGrow | 1), (MaskGrow | 1))))
+                    using (var k = Cv2.GetStructuringElement(MorphShapes.Rect,
+                            new OpenCvSharp.Size((MaskGrow | 1), (MaskGrow | 1))))
                     {
                         Cv2.Dilate(interBin, interBin, k);
                     }
                 }
 
-                // 7) ROI 크기의 마스크에 교집합 위치로 복사(ROI 기준 오프셋 보정)
                 var roiMask = new Mat(roiSize, MatType.CV_8UC1, Scalar.All(0));
                 var dstRect = new OpenCvSharp.Rect(inter.X - roiRect.X, inter.Y - roiRect.Y, inter.Width, inter.Height);
                 using (var dstRoi = new Mat(roiMask, dstRect))

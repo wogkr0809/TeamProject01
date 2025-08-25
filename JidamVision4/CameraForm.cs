@@ -543,7 +543,5 @@ namespace JidamVision4
             MainForm.GetDockForm<ResultForm>().ClearResults();
         }
 
-
-
     }
 }
