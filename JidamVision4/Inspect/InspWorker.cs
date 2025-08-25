@@ -112,6 +112,7 @@ namespace JidamVision4.Inspect
                     cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
                 }));
             }
+            //
 
             var resultForm = MainForm.GetDockForm<ResultForm>();
             if (resultForm != null && resultForm.IsHandleCreated)
