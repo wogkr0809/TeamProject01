@@ -14,9 +14,6 @@ namespace JidamVision4.Inspect
 {
     public class InspectBoard
     {
-        public InspectBoard()
-        {
-        }
 
         public bool Inspect(InspWindow window)
         {
@@ -82,6 +79,7 @@ namespace JidamVision4.Inspect
             // 1) ID 윈도우로 정렬 오프셋 계산(순차)
             Point alignOffset = new Point(0, 0);
             var idWindow = windowList.Find(w => w.InspWindowType == InspWindowType.ID);
+
             if (idWindow != null)
             {
                 var match = idWindow.FindInspAlgorithm(InspectType.InspMatch) as MatchAlgorithm;
@@ -146,6 +144,10 @@ namespace JidamVision4.Inspect
                             ResultValue = GetResultValue(algo),
                             ResultInfos = (algo.ResultString != null) ? string.Join("\r\n", algo.ResultString) : null
                         };
+
+                        algo.GetResultRect(out var areas);
+                        res.ResultRectList = areas;
+
                         win.AddInspResult(res); // thread-safe 버전
                     }
                 }

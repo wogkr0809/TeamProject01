@@ -1,4 +1,5 @@
-﻿using JidamVision4.Algorithm;
+﻿using iTextSharp.text.log;
+using JidamVision4.Algorithm;
 using JidamVision4.Core;
 using JidamVision4.Teach;
 using JidamVision4.Util;
@@ -10,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace JidamVision4.Inspect
 {
@@ -70,6 +72,8 @@ namespace JidamVision4.Inspect
         //InspStage내의 모든 InspWindow들을 검사하는 함수
         public bool RunInspect(out bool isDefect)
         {
+            Global.Inst.InspStage.NgCounter.Reset();
+
             isDefect = false;
             Model curMode = Global.Inst.InspStage.CurModel;
             var inspWindowList = curMode.InspWindowList;
@@ -87,11 +91,12 @@ namespace JidamVision4.Inspect
             // ★ 활성만 보드에 전달
             if (active.Count > 0)
                 _inspectBoard.InspectWindowList(active);
+            Global.Inst.InspStage.NgCounter.AddFromWindows(active);
+
 
             int totalCnt = 0, okCnt = 0, ngCnt = 0;
             var allRects = new List<DrawInspectInfo>();
 
-            // ★ 결과 집계/표시도 활성만
             foreach (var w in active)
             {
                 totalCnt++;
@@ -103,13 +108,31 @@ namespace JidamVision4.Inspect
                     allRects.AddRange(rects);
             }
 
+            // ★ Scratch/Soldering이 ‘하나라도’ 있으면 NG +1씩
+            bool hasScratch = Global.Inst.InspStage.NgCounter.LastRunHasScratch;
+            bool hasSolder = Global.Inst.InspStage.NgCounter.LastRunHasSolder;
+
+            if (hasScratch) ngCnt += 1;
+            if (hasSolder) ngCnt += 1;
+
+            // ★ 전체 판정에도 반영 (누적 KPI용)
+            if (hasScratch || hasSolder) isDefect = true;
+
+            // OK 재계산(총계 - NG)
+            okCnt = Math.Max(0, totalCnt - ngCnt);
+
+            // 스냅샷 값(이걸 UI에 그대로 전달)
+            int total = totalCnt, ok = okCnt, ng = ngCnt;
+
+
             var cameraForm = MainForm.GetDockForm<CameraForm>();
             if (cameraForm != null && cameraForm.IsHandleCreated)
             {
                 cameraForm.BeginInvoke((Action)(() =>
                 {
                     cameraForm.AddRect(allRects);
-                    cameraForm.SetInspResultCount(totalCnt, okCnt, ngCnt);
+                    // ★ 계산 로직 절대 넣지 말고, 확정된 스냅샷만 표시
+                    cameraForm.SetInspResultCount(total, ok, ng);
                 }));
             }
             //
@@ -124,9 +147,6 @@ namespace JidamVision4.Inspect
             }
 
             Global.Inst.InspStage.AddAccumCount(1, isDefect ? 0 : 1, isDefect ? 1 : 0);
-            // 활성 ROI 리스트: active
-            // ★ ROI별 NG 누적 (각 ROI가 NG면 해당 카테고리에 +1)
-            Global.Inst.InspStage.NgCounter.AddFromWindows(active);
             return true;
 
         }
