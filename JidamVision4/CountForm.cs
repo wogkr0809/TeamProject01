@@ -95,6 +95,48 @@ namespace JidamVision4
 
             Global.Inst.InspStage.AccumChanged += OnAccumChanged;
             Global.Inst.InspStage.CategoryChanged += OnCategoryChanged;
+
+            // 스크롤바로 인한 여백 방지 (필수는 아니지만 권장)
+            _catGrid.ScrollBars = ScrollBars.None;
+
+            // 행 높이 자동 맞춤 이벤트 연결
+            _catGrid.Resize += (s, e) => FitRowsToFill(_catGrid);
+            _catGrid.RowsAdded += (s, e) => FitRowsToFill(_catGrid);
+            _catGrid.RowsRemoved += (s, e) => FitRowsToFill(_catGrid);
+
+            // 초기 1회 맞춤
+            FitRowsToFill(_catGrid);
+        }
+
+        // 남는 세로 공간 없이 행 높이를 균등 분배
+        private void FitRowsToFill(DataGridView g)
+        {
+            if (g == null || g.RowCount == 0) return;
+
+            // 헤더와 테두리를 제외한 실제 셀 영역 높이
+            int headerH = g.ColumnHeadersVisible ? g.ColumnHeadersHeight : 0;
+            int clientH = g.ClientSize.Height;
+
+            // 수평 스크롤바가 없도록 AutoSizeColumnsMode=Fill을 이미 사용 중이라면 아래는 대부분 0
+            int hScroll = (g.HorizontalScrollingOffset > 0) ? SystemInformation.HorizontalScrollBarHeight : 0;
+
+            int available = clientH - headerH - hScroll;
+            if (available <= 0) return;
+
+            // 최소/최대 행 높이(가독성 보장)
+            const int minRowH = 22;
+            const int maxRowH = 80;
+
+            // 균등 분배
+            int perRow = Math.Max(minRowH, Math.Min(maxRowH, available / g.RowCount));
+            foreach (DataGridViewRow row in g.Rows)
+                row.Height = perRow;
+
+            // 혹시 미세한 픽셀 오차가 있으면 마지막 행에 보정치 더해주기
+            int used = perRow * g.RowCount;
+            int remain = available - used;
+            if (remain > 0 && g.RowCount > 0)
+                g.Rows[g.RowCount - 1].Height = Math.Min(maxRowH, g.Rows[g.RowCount - 1].Height + remain);
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
