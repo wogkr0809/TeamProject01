@@ -1134,7 +1134,7 @@ namespace JidamVision4.UIControl
                         return;
 
                     _selEntity = new DiagramEntity(_roiRect, _selColor);
-
+                    
                     //모델에 InspWindow 추가하는 이벤트 발생
                     DiagramEntityEvent?.Invoke(this, new DiagramEntityEventArgs(EntityActionType.Add, null, _newRoiType, _roiRect, new Point()));
 
@@ -1498,19 +1498,15 @@ namespace JidamVision4.UIControl
                         break;
                     case Keys.Enter:
                         {
-                            // A) Dock 환경: MainForm에 GetDockForm<T>()가 있다면 이걸 쓰는 게 가장 정확
+                            // 더 이상 AcceptButton으로 보내지 말고, RunForm의 '현재 프레임 검사'만 호출
                             var runForm = MainForm.GetDockForm<RunForm>();
-
-                            // B) 백업: OpenForms에서 찾아보기
                             if (runForm == null)
                                 runForm = Application.OpenForms.OfType<RunForm>().FirstOrDefault();
 
                             if (runForm != null && runForm.IsHandleCreated)
-                            {
-                                // UI 스레드로 보내서 안전하게 실행
-                                runForm.BeginInvoke((Action)(() => runForm.StartFromHotkey()));
-                            }
-                            return true; // Enter 소비(중복/삑소리 방지)
+                                runForm.BeginInvoke((Action)(async () => await runForm.StartCurrentInspectAsync()));
+
+                            return true; // 기본 처리(마지막 포커스 버튼 재클릭) 차단
                         }
                 }
             }

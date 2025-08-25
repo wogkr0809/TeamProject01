@@ -1005,6 +1005,23 @@ namespace JidamVision4.Core
                 ResetDisplay();
         }
 
+        public bool InspectCurrentOnly()
+        {
+            // 연속검사 돌고 있으면 무시 (경합 방지)
+            if (_inspWorker != null && _inspWorker.IsRunning)
+                return false;
+
+            // 현재 프레임 유효 여부(예: 채널0 체크) — 필요에 맞게 보완
+            var m = GetMat(0, 0);
+            if (m == null || m.Empty())
+                return false; // 아직 한 번도 그랩 안 함
+
+            ResetDisplaySafe(); // UI는 메인스레드에서 (앞서 만든 래퍼)
+
+            bool isDefect;
+            return _inspWorker.RunInspect(out isDefect);
+        }
+
         #region Disposable
 
         private bool disposed = false; // to detect redundant calls
