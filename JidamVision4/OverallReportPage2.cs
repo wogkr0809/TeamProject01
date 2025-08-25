@@ -341,6 +341,7 @@ namespace JidamVision4.Reports
 
             panel.AddCell(imgCell);
             return new PdfPCell(panel) { Border = PdfPCell.NO_BORDER, Padding = 4f };
+            //
         }
 
         static PdfPCell ImageTile(string label, Bitmap bmp) => ImageTile(label, bmp, 160f, 130f);
