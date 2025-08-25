@@ -136,7 +136,7 @@ namespace JidamVision4.Inspect
         {
             if (inspObj != null)
             {
-                if (!inspObj.IgnoreInsp)
+                if (inspObj.IgnoreInsp)
                     return true;
 
                 if (!UpdateInspData(inspObj))
