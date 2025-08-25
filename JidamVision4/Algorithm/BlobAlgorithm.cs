@@ -282,27 +282,6 @@ namespace JidamVision4.Algorithm
                     }
                 }
             }
-
-
-            if (ScratchBoost)
-            {
-                int k = Math.Max(3, (ScratchCloseLen | 1)); // 홀수 보장
-                using (var kH = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(k, 1)))
-                using (var kV = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(1, k)))
-                {
-                    Cv2.MorphologyEx(binImage, binImage, MorphTypes.Close, kH);
-                    Cv2.MorphologyEx(binImage, binImage, MorphTypes.Close, kV);
-                }
-                if (ScratchDilate > 0)
-                {
-                    using (var kD = Cv2.GetStructuringElement(MorphShapes.Rect,
-                                     new Size(2 * ScratchDilate + 1, 2 * ScratchDilate + 1)))
-                    {
-                        Cv2.Dilate(binImage, binImage, kD, iterations: 1);
-                    }
-                }
-            }
-
             Point[][] contours;
             HierarchyIndex[] hierarchy;
             Cv2.FindContours(binImage, out contours, out hierarchy,
@@ -413,6 +392,12 @@ namespace JidamVision4.Algorithm
             {
                 if (_findArea.Count > 0) IsDefect = true;
             }
+
+            // ✅ Count 텍스트는 항상 추가 (OK면 Info, NG면 Defect 스타일)
+            DecisionType dec = IsDefect ? DecisionType.Defect : DecisionType.Info;
+            _findArea.Add(new DrawInspectInfo(InspRect, $"Count:{findBlobCount}",
+                           InspectType.InspBinary, dec));
+
 
             if (IsDefect)
             {
