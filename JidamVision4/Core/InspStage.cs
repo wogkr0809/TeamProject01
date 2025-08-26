@@ -116,13 +116,6 @@ namespace JidamVision4.Core
                 x.w.Name = $"{prefix}_{i++:000000}";
         }
 
-        // === [ROI Name] 강제 배정 ===
-        private void ForceAssignNameByRule(InspWindow w)
-        {
-            if (w == null) return;
-            w.Name = GenerateNextName(w.InspWindowType);
-        }
-
         public NgCategoryCounter NgCounter { get; } = new NgCategoryCounter();
 
         public event Action<IReadOnlyDictionary<string, long>> CategoryChanged
@@ -315,48 +308,91 @@ namespace JidamVision4.Core
         {
             SLogger.Write($"Load Image : {filePath}");
 
-            Mat matImage = Cv2.ImRead(filePath);
-
-            if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+            // 파일 존재/경로 반영
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
             {
-                CurrentImagePath = filePath;
-                if (CurModel != null) CurModel.InspectImagePath = filePath;
+                MessageBox.Show("이미지 파일이 없습니다.");
+                return;
+            }
+            CurrentImagePath = filePath;
+            if (CurModel != null) CurModel.InspectImagePath = filePath;
+
+            // 1) 원본 로드 (채널 유지)
+            Mat matImage = Cv2.ImRead(filePath, ImreadModes.Unchanged);
+            if (matImage.Empty())
+            {
+                SLogger.Write("이미지 로드 실패(Empty).");
+                MessageBox.Show("이미지를 불러오지 못했습니다.");
+                return;
             }
 
-            int pixelBpp = 8;
-            int imageWidth;
-            int imageHeight;
-            int imageStride;
+            // 2) 채널 정규화: BGRA → BGR, 그 외는 1/3채널로 통일
+            if (matImage.Channels() == 4)
+                Cv2.CvtColor(matImage, matImage, ColorConversionCodes.BGRA2BGR);
+            else if (matImage.Channels() != 1 && matImage.Channels() != 3)
+                Cv2.CvtColor(matImage, matImage, ColorConversionCodes.BGR2GRAY);
 
-            if (matImage.Type() == MatType.CV_8UC3)
-                pixelBpp = 24;
+            int channels = matImage.Channels();
+            int pixelBpp = (channels == 3) ? 24 : 8;
 
-            imageWidth = (matImage.Width + 3) / 4 * 4;
-            imageHeight = matImage.Height;
+            // 3) 가로 4바이트 정렬
+            int imageWidth = (matImage.Width + 3) / 4 * 4;
+            int imageHeight = matImage.Height;
 
-            // 4바이트 정렬된 새로운 Mat 생성
-            Mat alignedMat = new Mat();
-            Cv2.CopyMakeBorder(matImage, alignedMat, 0, 0, 0, imageWidth - matImage.Width, BorderTypes.Constant, Scalar.Black);
+            Mat alignedMat;
+            if (imageWidth != matImage.Width)
+            {
+                alignedMat = new Mat();
+                Cv2.CopyMakeBorder(matImage, alignedMat, 0, 0, 0, imageWidth - matImage.Width,
+                                   BorderTypes.Constant, Scalar.Black);
+            }
+            else
+            {
+                alignedMat = matImage;
+            }
 
-            imageStride = imageWidth * matImage.ElemSize();
+            // stride = width * bytesPerPixel(=ElemSize)
+            int imageStride = imageWidth * alignedMat.ElemSize();
 
+            // 4) ImageSpace 정보/버퍼 보장
             if (_imageSpace != null)
             {
-                if (_imageSpace.ImageSize.Width != imageWidth || _imageSpace.ImageSize.Height != imageHeight)
+                bool needReset =
+                    _imageSpace.ImageSize.Width != imageWidth ||
+                    _imageSpace.ImageSize.Height != imageHeight ||
+                    _imageSpace.PixelBpp != pixelBpp;
+
+                if (needReset)
                 {
                     _imageSpace.SetImageInfo(pixelBpp, imageWidth, imageHeight, imageStride);
-                    SetBuffer(_imageSpace.BufferCount);
+                    SetBuffer(_imageSpace.BufferCount); // 내부 InitImageSpace(bufferCount) 포함
                 }
             }
 
             int bufferIndex = 0;
 
-            // Mat의 데이터를 byte 배열로 복사
+            // 5) 대상 버퍼 확인(없거나 작으면 재초기화)
             int bufSize = (int)(alignedMat.Total() * alignedMat.ElemSize());
-            Marshal.Copy(alignedMat.Data, ImageSpace.GetInspectionBuffer(bufferIndex), 0, bufSize);
+            byte[] dst = ImageSpace.GetInspectionBuffer(bufferIndex);
+            if (dst == null || dst.Length < bufSize)
+            {
+                _imageSpace.SetImageInfo(pixelBpp, imageWidth, imageHeight, imageStride);
+                _imageSpace.InitImageSpace(Math.Max(1, _imageSpace.BufferCount));
 
+                dst = ImageSpace.GetInspectionBuffer(bufferIndex);
+                if (dst == null || dst.Length < bufSize)
+                {
+                    SLogger.Write($"이미지 버퍼 생성 실패: need={bufSize}, have={(dst == null ? 0 : dst.Length)}", SLogger.LogType.Error);
+                    MessageBox.Show("이미지 버퍼 생성에 실패했습니다.");
+                    return;
+                }
+            }
+
+            // 6) Mat → 버퍼 복사
+            Marshal.Copy(alignedMat.Data, dst, 0, bufSize);
+
+            // 7) 채널 분리/표시
             _imageSpace.Split(bufferIndex);
-
             DisplayGrabImage(bufferIndex);
         }
 
