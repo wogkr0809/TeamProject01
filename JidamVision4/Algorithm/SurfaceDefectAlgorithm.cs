@@ -37,8 +37,8 @@ namespace JidamVision4.Algorithm
         public int ScratchDilate { get; set; }
         public int ScratchMinLen { get; set; }    // 길이(픽셀)
         public int ScratchMaxWidth { get; set; }     // 최대폭(픽셀)
-        public double ScratchMinRatio { get; set; }  // 길이/폭 비
-        public int ScratchOpen { get; set; } = 0;      // 작은 점 제거(팽창+침식)
+        public double ScratchMinRatio { get; set; } = 3; // 길이/폭 비
+        public int ScratchOpen { get; set; } = 2;      // 작은 점 제거(팽창+침식)
 
         // ===== [납땜 이물] =====
         public bool EnableSolder { get; set; } = true;

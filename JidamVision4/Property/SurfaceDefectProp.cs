@@ -279,5 +279,10 @@ namespace JidamVision4.Property
                     mask.Dispose();
             }
         }
+
+        private void SurfaceDefectProp_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }
