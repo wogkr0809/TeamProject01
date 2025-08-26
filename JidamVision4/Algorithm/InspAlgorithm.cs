@@ -33,6 +33,7 @@ namespace JidamVision4.Algorithm
         //검사할 원본 이미지
         protected Mat _srcImage = null;
 
+        [XmlIgnore]
         //검사 결과 정보
         public List<string> ResultString { get; set; } = new List<string>();
 

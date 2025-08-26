@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 
 namespace JidamVision4.Algorithm
@@ -22,6 +23,7 @@ namespace JidamVision4.Algorithm
     public class SurfaceDefectAlgorithm : InspAlgorithm
     {
 
+        [XmlIgnore]
         public Bitmap CustomMask { get; set; }
         // ───── 수동 마스크(검정=제외, 흰색=검사) ─────
         public bool UseManualMask { get; set; } = false;

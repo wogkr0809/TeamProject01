@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using JidamVision4.Core;
+using System.Xml.Serialization;
 
 
 namespace JidamVision4.Algorithm
@@ -56,7 +57,6 @@ namespace JidamVision4.Algorithm
         ////이진화 필터로 찾은 영역
         //private List<DrawInspectInfo> _findArea;
         private List<DrawInspectInfo> _findArea = new List<DrawInspectInfo>();
-        public List<string> ResultString { get; private set; } = new List<string>();
 
         public BinaryMethod BinMethod { get; set; } = BinaryMethod.Feature;
         //검사로 찾은 영역을 최외곽박스로 표시할 지 여부

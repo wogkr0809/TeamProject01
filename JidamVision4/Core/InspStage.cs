@@ -19,6 +19,7 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using JidamVision4.Sequence;
 using static JidamVision4.MainForm;
+using System.Threading;
 
 namespace JidamVision4.Core
 {
@@ -910,6 +911,7 @@ namespace JidamVision4.Core
                                 SLogger.Write(errMsg, SLogger.LogType.Error);
                             }
                         }
+                        Thread.Sleep(500);
 
                         bool isDefect = false;
                         if (!_inspWorker.RunInspect(out isDefect))
