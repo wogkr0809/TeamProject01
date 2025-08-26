@@ -18,7 +18,7 @@ namespace JidamVision4.Algorithm
     { 
         //알고리즘 타입 정의
         public InspectType InspectType { get; set; } = InspectType.InspNone;
-
+        
         //알고지즘을 사용할지 여부 결정
         public bool IsUse { get; set; } = true;
         //검사가 완료되었는지를 판단
