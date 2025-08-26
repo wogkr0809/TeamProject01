@@ -231,6 +231,8 @@ namespace JidamVision4.Core
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
 
+            LoadSetting();
+
             switch (_camType)
             {
                 //#5_CAMERA_INTERFACE#5 타입에 따른 카메라 인스턴스 생성
